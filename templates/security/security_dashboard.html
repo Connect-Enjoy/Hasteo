@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard - Hasteo{% endblock %}
+
+{% block page_title %}Security Dashboard{% endblock %}
+{% block page_subtitle %}Manage student attendance and bus operations{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.today_entry }}</div>
+        <div class="stat-label">Today's Entry</div>
+        <div style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+            <i class="fas fa-sign-in-alt"></i> Student entries today
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.today_exit }}</div>
+        <div class="stat-label">Today's Exit</div>
+        <div style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+            <i class="fas fa-sign-out-alt"></i> Student exits today
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_scans }}</div>
+        <div class="stat-label">Total Scans</div>
+        <div style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+            <i class="fas fa-qrcode"></i> Your total scans
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.active_buses }}</div>
+        <div class="stat-label">Active Buses</div>
+        <div style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+            <i class="fas fa-bus"></i> Buses active today
+        </div>
+    </div>
+</div>
+
+<!-- Feature Cards -->
+<div class="feature-cards">
+    <a href="{{ url_for('scan') }}" class="feature-card" style="text-decoration: none; color: inherit;">
+        <i class="fas fa-qrcode"></i>
+        <h3>Quick Scan</h3>
+        <p>Start scanning student IDs for attendance</p>
+        <div style="margin-top: 15px; color: var(--primary); font-weight: 500;">
+            Start Scanning →
+        </div>
+    </a>
+    
+    <a href="{{ url_for('history') }}" class="feature-card" style="text-decoration: none; color: inherit;">
+        <i class="fas fa-history"></i>
+        <h3>View History</h3>
+        <p>Check recent scan records and attendance</p>
+        <div style="margin-top: 15px; color: var(--primary); font-weight: 500;">
+            View History →
+        </div>
+    </a>
+    
+    <a href="{{ url_for('bus_logs') }}" class="feature-card" style="text-decoration: none; color: inherit;">
+        <i class="fas fa-bus"></i>
+        <h3>Bus Logs</h3>
+        <p>Record bus arrival and departure times</p>
+        <div style="margin-top: 15px; color: var(--primary); font-weight: 500;">
+            Record Logs →
+        </div>
+    </a>
+    
+    <div class="feature-card" onclick="showComingSoon()" style="cursor: pointer;">
+        <i class="fas fa-chart-bar"></i>
+        <h3>Reports</h3>
+        <p>View attendance reports and statistics</p>
+        <div style="margin-top: 15px; color: var(--text-light); font-weight: 500;">
+            Coming Soon
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card" style="margin-top: 30px;">
+    <h3><i class="fas fa-clock"></i> Recent Scans</h3>
+    <div id="recentScans" style="text-align: center; padding: 40px; color: var(--text-light);">
+        <div class="loading-spinner"></div>
+        <p>Loading recent scans...</p>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div style="text-align: center; margin-top: 30px; padding: 25px; background: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 50%, var(--primary) 100%); border-radius: var(--radius-lg);">
+    <h3 style="margin-bottom: 20px; color: white;">Quick Actions</h3>
+    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <a href="{{ url_for('scan') }}" class="btn" style="background: white; color: var(--primary);">
+            <i class="fas fa-qrcode"></i> Start Scanning
+        </a>
+        <a href="{{ url_for('bus_logs') }}" class="btn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid white;">
+            <i class="fas fa-bus"></i> Record Bus Time
+        </a>
+        <button onclick="refreshData()" class="btn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid white;">
+            <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/security.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRecentScans();
+    });
+    
+    async function loadRecentScans() {
+        try {
+            const response = await fetch('/api/attendance?limit=5');
+            const history = await response.json();
+            
+            const container = document.getElementById('recentScans');
+            if (!container) return;
+            
+            if (!response.ok) {
+                container.innerHTML = `<div class="empty-state">${history.error || 'Failed to load'}</div>`;
+                return;
+            }
+            
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <h3>No recent scans</h3>
+                        <p>Start scanning to see records here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const tableHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Student</th>
+                                <th>Bus No</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${history.map(record => `
+                                <tr>
+                                    <td style="padding: 10px; color: var(--text-light); font-size: 0.875rem;">${formatTime(record.timestamp)}</td>
+                                    <td style="padding: 10px;">${record.student_name || 'N/A'}</td>
+                                    <td style="padding: 10px; font-weight: 500;">${record.bus_no}</td>
+                                    <td style="padding: 10px;"><span class="badge ${record.scan_type === 'entry' ? 'badge-success' : 'badge-info'}">${record.scan_type.toUpperCase()}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="{{ url_for('history') }}" class="btn btn-sm">View Full History</a>
+                </div>
+            `;
+            
+            container.innerHTML = tableHTML;
+            
+        } catch (error) {
+            const container = document.getElementById('recentScans');
+            if (container) {
+                container.innerHTML = `<div class="empty-state">Failed to load</div>`;
+            }
+        }
+    }
+    
+    function showComingSoon() {
+        showNotification('This feature is coming soon!', 'info');
+    }
+    
+    function refreshData() {
+        loadRecentScans();
+        showNotification('Data refreshed', 'success');
+    }
+</script>
+{% endblock %}

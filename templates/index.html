@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasteo - College Bus Attendance System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-logo">
+            <img src="{{ url_for('static', filename='images/app_logo.png') }}" alt="Hasteo" style="width: 80px; height: 80px; border-radius: 20px;">
+        </div>
+        <div class="splash-text">Hasteo</div>
+    </div>
+
+    <header>
+        <div class="container header-container">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/app_logo.png') }}" alt="Logo" class="logo-img" style="width: 40px; height: 40px;">
+                <div class="logo-text">Hasteo</div>
+            </div>
+            
+            <div class="nav-center">
+                <a href="{{ url_for('index') }}">Home</a>
+                <a href="{{ url_for('admin_login') }}">Admin Login</a>
+                <a href="{{ url_for('security_login') }}">Security Login</a>
+            </div>
+            
+            <div class="availability-badge" style="background: var(--success-light); color: var(--success); padding: 8px 16px; border-radius: 8px; font-size: 0.875rem;">
+                <i class="fas fa-wifi"></i> Smart Bus Tracking
+            </div>
+        </div>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="hero">
+            <div class="container">
+                <div class="hero-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo" style="width: 100px; height: 100px; border-radius: 20px;">
+                </div>
+                <h1 class="hero-title">Hasteo Bus Attendance System</h1>
+                <p class="hero-subtitle">Efficient student transportation management with barcode scanning</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('admin_login') }}" class="btn" style="margin-right: 15px;">
+                        <i class="fas fa-user-shield"></i> Admin Portal
+                    </a>
+                    <a href="{{ url_for('security_login') }}" class="btn btn-secondary">
+                        <i class="fas fa-user-check"></i> Security Portal
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" style="padding: 60px 0;">
+            <div style="text-align: center;">
+                <h2 style="margin-bottom: 30px;">System Features</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                    <div class="feature-card">
+                        <i class="fas fa-qrcode" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>Student ID Scanning</h3>
+                        <p>Scan student barcodes with format: COURSE/ID/YEAR (e.g., SCS/10187/23)</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-user-shield" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>Admin Management</h3>
+                        <p>Add students and security personnel, manage fees and attendance</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-bus" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>Bus Tracking</h3>
+                        <p>Track bus arrival/departure and student attendance in real-time</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-mobile-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>PWA Support</h3>
+                        <p>Install as mobile app with offline functionality</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" style="padding: 40px 0;">
+            <div style="background: var(--accent); padding: 40px; border-radius: var(--radius-xl); text-align: center;">
+                <h3 style="margin-bottom: 20px; color: var(--text-primary);">Student ID Format</h3>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+                    <div style="background: white; padding: 20px; border-radius: var(--radius-lg); min-width: 250px; box-shadow: var(--shadow);">
+                        <h4 style="color: var(--primary); margin-bottom: 10px;">Student Barcode</h4>
+                        <div style="font-family: monospace; font-size: 1.2rem; background: var(--bg-secondary); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                            SCS/10187/23
+                        </div>
+                        <div style="text-align: left; padding: 0 10px;">
+                            <p><strong>S:</strong> Student</p>
+                            <p><strong>CS:</strong> Computer Science</p>
+                            <p><strong>10187:</strong> Unique ID</p>
+                            <p><strong>23:</strong> Admission Year</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: var(--radius-lg); min-width: 250px; box-shadow: var(--shadow);">
+                        <h4 style="color: var(--primary); margin-bottom: 10px;">How to Use</h4>
+                        <div style="text-align: left;">
+                            <p><i class="fas fa-camera" style="color: var(--primary);"></i> Point camera at barcode</p>
+                            <p><i class="fas fa-sun" style="color: var(--primary);"></i> Ensure good lighting</p>
+                            <p><i class="fas fa-bus" style="color: var(--primary);"></i> Select bus number</p>
+                            <p><i class="fas fa-exchange-alt" style="color: var(--primary);"></i> Choose entry/exit type</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container" style="padding: 20px; text-align: center; color: var(--text-light); border-top: 1px solid var(--border);">
+            © 2025 Hasteo - College Bus Attendance System. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <script>
+        // Hide splash screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splashScreen');
+                if (splashScreen) {
+                    splashScreen.style.opacity = '0';
+                    setTimeout(() => splashScreen.style.display = 'none', 300);
+                }
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

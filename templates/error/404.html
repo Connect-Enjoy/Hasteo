@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Hasteo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        .error-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        
+        .error-icon {
+            font-size: 6rem;
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+        
+        .error-content {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .error-code {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-map-signs"></i>
+        </div>
+        
+        <div class="error-content">
+            <div class="error-code">404</div>
+            
+            <h1 style="margin-bottom: 15px; color: var(--text-primary);">Page Not Found</h1>
+            
+            <p style="color: var(--text-light); margin-bottom: 30px;">
+                The page you're looking for doesn't exist or has been moved.
+            </p>
+            
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                <a href="/" class="btn">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+                
+                <button onclick="window.history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: var(--accent); border-radius: 12px; max-width: 400px;">
+            <h4 style="margin-bottom: 10px; color: var(--text-primary);">
+                <i class="fas fa-lightbulb"></i> Quick Links
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="{{ url_for('admin_login') }}" class="btn-text" style="text-align: center;">
+                    <i class="fas fa-user-shield"></i> Admin Login
+                </a>
+                <a href="{{ url_for('security_login') }}" class="btn-text" style="text-align: center;">
+                    <i class="fas fa-user-check"></i> Security Login
+                </a>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; color: var(--text-light); font-size: 0.875rem;">
+            <p>Hasteo Bus System v1.0</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+</body>
+</html>

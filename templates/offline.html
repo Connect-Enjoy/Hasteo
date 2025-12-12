@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Hasteo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        .offline-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        
+        .offline-icon {
+            font-size: 6rem;
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+        
+        .offline-content {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .offline-features {
+            background: var(--accent);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 40px;
+            max-width: 400px;
+        }
+        
+        .offline-features h4 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .offline-features ul {
+            text-align: left;
+            color: var(--text-secondary);
+            padding-left: 20px;
+        }
+        
+        .offline-features li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            <i class="fas fa-wifi-slash"></i>
+        </div>
+        
+        <div class="offline-content">
+            <h1 style="margin-bottom: 15px; color: var(--text-primary);">You're Offline</h1>
+            
+            <p style="color: var(--text-light); margin-bottom: 30px;">
+                It looks like you're not connected to the internet. Some features may not be available.
+            </p>
+            
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                <button onclick="window.location.reload()" class="btn">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+                
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+            </div>
+        </div>
+        
+        <div class="offline-features">
+            <h4>
+                <i class="fas fa-info-circle"></i> Offline Features
+            </h4>
+            <ul>
+                <li>View previously loaded pages</li>
+                <li>Access cached student data</li>
+                <li>Scan students (will sync when online)</li>
+                <li>View bus schedule</li>
+                <li>Check attendance history</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px; color: var(--text-light); font-size: 0.875rem;">
+            <p>Hasteo Bus System v1.0</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script>
+        // Check connection status periodically
+        function checkConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }
+        
+        // Check every 5 seconds
+        setInterval(checkConnection, 5000);
+        
+        // Also check when connection is restored
+        window.addEventListener('online', checkConnection);
+    </script>
+</body>
+</html>

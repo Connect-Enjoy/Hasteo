@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error - Hasteo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        .error-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        
+        .error-icon {
+            font-size: 6rem;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+        
+        .error-content {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .error-code {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--danger);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <div class="error-content">
+            <div class="error-code">500</div>
+            
+            <h1 style="margin-bottom: 15px; color: var(--text-primary);">Server Error</h1>
+            
+            <p style="color: var(--text-light); margin-bottom: 30px;">
+                Something went wrong on our end. Please try again later.
+            </p>
+            
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                <a href="/" class="btn">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+                
+                <button onclick="window.location.reload()" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: var(--danger-light); border-radius: 12px; max-width: 400px;">
+            <h4 style="margin-bottom: 10px; color: var(--danger);">
+                <i class="fas fa-info-circle"></i> What to do?
+            </h4>
+            <div style="text-align: left; color: var(--text-secondary);">
+                <p>1. Refresh the page</p>
+                <p>2. Clear browser cache</p>
+                <p>3. Try again in a few minutes</p>
+                <p>4. Contact support if problem persists</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; color: var(--text-light); font-size: 0.875rem;">
+            <p>Hasteo Bus System v1.0</p>
+            <p style="margin-top: 5px; font-size: 0.75rem;">Error ID: {{ request.id if request else 'N/A' }}</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+</body>
+</html>
