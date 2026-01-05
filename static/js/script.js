@@ -50,14 +50,4 @@ function setupPWA() {
         }
         deferredPrompt = null;
     });
-    
-    // Hide splash screen
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            const splashScreen = document.getElementById('splashScreen');
-            if (splashScreen) {
-                splashScreen.style.display = 'none';
-            }
-        }, 2000);
-    });
 }
