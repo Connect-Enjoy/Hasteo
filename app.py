@@ -23,6 +23,10 @@ def service_worker():
 def index():
     return render_template('index.html')
 
+@app.route('/scan')
+def scanner():
+    return render_template('scan.html')
+
 # Vercel requirement
 application = app
 
