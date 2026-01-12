@@ -9,10 +9,8 @@
         </div>
         
         <div class="nav-center">
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="#login">Login</a>
-            <a href="#scan">Scan</a>
-            <a href="#dashboard">Dashboard</a>
+            <a href="#security-login">Security Login</a>
+            <a href="#admin-login">Admin Login</a>
         </div>
         
         <!-- PWA Install Button -->
@@ -31,7 +29,9 @@
             <p>Smart & Efficient Student Transportation Management</p>
             
             <div class="mt-4">
-                <a href="#login" class="btn">Login to System</a>
+                <a href="{{ url_for('scanner') }}" class="btn scanner-btn">
+                    <i class="fas fa-qrcode"></i> Try our Scanner
+                </a>
             </div>
         </div>
     </section>
