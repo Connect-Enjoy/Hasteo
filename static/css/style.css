@@ -320,6 +320,7 @@ header {
     padding: 12px 16px;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     font-size: 16px;
@@ -381,6 +382,27 @@ header {
 .btn-secondary {
     background: linear-gradient(135deg, rgba(255, 228, 196, 0.9), rgba(255, 179, 71, 0.9));
     color: var(--text-dark);
+}
+
+/* Scanner Button */
+.scanner-btn {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    /* Pulse animation removed - keeping the animation keyframes for other uses */
+}
+
+/* Pulse animation kept for other potential uses */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 140, 66, 0);
+    }
 }
 
 /* Dashboard Styles - Enhanced with Glassmorphism */
@@ -801,26 +823,6 @@ footer {
     background: linear-gradient(135deg, rgba(2, 119, 189, 0.2), rgba(33, 150, 243, 0.2));
     border-color: var(--info);
     transform: translateY(-2px);
-}
-
-/* Scanner Button */
-.scanner-btn {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    border-radius: var(--radius-lg);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.7);
-    }
-    50% {
-        box-shadow: 0 0 0 10px rgba(255, 140, 66, 0);
-    }
 }
 
 /* Scanner Page Styles */
