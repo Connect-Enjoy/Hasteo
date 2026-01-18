@@ -22,10 +22,8 @@
     <!-- Scanner Viewport -->
     <div class="scanner-body">
         <div class="scanner-viewport">
-            <!-- Video element for Quagga -->
-            <video id="scannerVideo" class="scanner-video-minimal" playsinline></video>
-            <!-- Canvas for Quagga visualization (hidden by default) -->
-            <canvas class="drawingBuffer" style="display: none; position: absolute; top: 0; left: 0;"></canvas>
+            <!-- Container for Quagga (NOT video element) -->
+            <div id="scannerContainer"></div>
             
             <!-- Simple overlay frame -->
             <div class="scanner-overlay-minimal">
