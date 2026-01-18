@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Barcode Scanner - Hasteo{% endblock %}
+{% block title %}1D Barcode Scanner - Hasteo{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
@@ -14,7 +14,7 @@
             <a href="{{ url_for('index') }}" class="back-btn-minimal">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
-            <div class="scanner-title-minimal">Barcode Scanner</div>
+            <div class="scanner-title-minimal">1D Barcode Scanner</div>
             <div class="header-spacer"></div>
         </div>
     </div>
@@ -22,7 +22,12 @@
     <!-- Scanner Viewport -->
     <div class="scanner-body">
         <div class="scanner-viewport">
-            <video id="scannerVideo" class="scanner-video-minimal" playsinline autoplay></video>
+            <!-- Video element for Quagga -->
+            <video id="scannerVideo" class="scanner-video-minimal" playsinline></video>
+            <!-- Canvas for Quagga visualization (hidden by default) -->
+            <canvas class="drawingBuffer" style="display: none; position: absolute; top: 0; left: 0;"></canvas>
+            
+            <!-- Simple overlay frame -->
             <div class="scanner-overlay-minimal">
                 <div class="scan-frame-minimal">
                     <div class="scan-line"></div>
@@ -47,8 +52,11 @@
             
             <div class="results-list" id="resultsList">
                 <div class="no-results">
-                    <i class="fas fa-qrcode"></i>
-                    <p>Point your camera at a barcode to scan</p>
+                    <i class="fas fa-barcode"></i>
+                    <p>Point camera at a 1D barcode to scan</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px; color: var(--text-light);">
+                        Supports: EAN, UPC, Code 128, Code 39, etc.
+                    </p>
                 </div>
             </div>
         </div>
@@ -57,7 +65,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Load ZXing first, then our scanner code -->
-<script src="https://unpkg.com/@zxing/library@latest"></script>
+<!-- Load QuaggaJS for 1D barcode scanning -->
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
 {% endblock %}
