@@ -16,39 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let lastScanTimeValue = 0;
         let scanResults = [];
         
-        // ADDED: First test camera access directly
-        await testCameraAccess();
-        
         initScanner();
-        
-        // ADDED: Function to test camera access
-        async function testCameraAccess() {
-            try {
-                updateStatus('Testing camera access...', 'info');
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: {
-                        facingMode: 'user', // Use front camera for laptops
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                });
-                
-                // Directly attach stream to video element for debugging
-                videoElement.srcObject = stream;
-                videoElement.play().then(() => {
-                    updateStatus('Camera is working! Initializing scanner...', 'success');
-                }).catch(e => {
-                    updateStatus('Camera error: ' + e.message, 'error');
-                });
-                
-                // Keep stream for later use
-                window.cameraStream = stream;
-                
-            } catch (error) {
-                handleCameraError(error);
-                throw error;
-            }
-        }
         
         async function initScanner() {
             try {
@@ -123,9 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     Quagga.start();
                     Quagga.onDetected(onDetected);
                     
-                    // ADDED: Ensure video is visible
+
+                    // Ensure video is visible
                     videoElement.style.opacity = '1';
-                    
+
                     // Add device-specific tips
                     if (isDesktop) {
                         setTimeout(() => {
@@ -133,8 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }, 3000);
                     }
                 });
-                
-                // ADDED: Add event listener to ensure video is visible
+
+                // Add event listener to ensure video is visible
                 videoElement.addEventListener('loadeddata', function() {
                     console.log('Video is loaded and playing');
                     videoElement.style.opacity = '1';
@@ -235,8 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             `<p>1. Ensure webcam is connected</p>
                              <p>2. Check browser camera permissions</p>
                              <p>3. Close other apps using camera</p>
-                             <p>4. Try Chrome or Firefox browser</p>
-                             <p>5. Check if camera works in another app</p>` :
+                             <p>4. Try Chrome or Firefox browser</p>` :
                             `<p>1. Allow camera permissions</p>
                              <p>2. Clean camera lens</p>
                              <p>3. Ensure good lighting</p>
@@ -246,29 +214,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button onclick="location.reload()" class="btn" style="background: var(--orange-medium);">
                         <i class="fas fa-redo"></i> Retry
                     </button>
-                    <button onclick="testCameraManually()" class="btn" style="background: var(--info); margin-left: 10px;">
-                        <i class="fas fa-camera"></i> Test Camera
-                    </button>
                 </div>
             `;
-        }
-        
-        // ADDED: Manual camera test function
-        function testCameraManually() {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(stream) {
-                        alert('Camera is working! You should see video now.');
-                        // Try to use this stream
-                        videoElement.srcObject = stream;
-                        videoElement.play();
-                    })
-                    .catch(function(error) {
-                        alert('Camera error: ' + error.message);
-                    });
-            } else {
-                alert('Your browser does not support camera access.');
-            }
         }
         
         function handleCameraError(error) {
@@ -385,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Clean up - MODIFIED to also clean up camera stream
+        // Clean up
         window.addEventListener('beforeunload', () => {
             if (scanning) {
                 Quagga.stop();
@@ -405,8 +352,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.cameraStream.getTracks().forEach(track => track.stop());
             }
         });
-        
-        // ADDED: Make test function available globally
-        window.testCameraManually = testCameraManually;
     }
 });
