@@ -16,7 +16,38 @@ document.addEventListener('DOMContentLoaded', function() {
         let lastScanTimeValue = 0;
         let scanResults = [];
         
+        // First test camera access directly
+        await testCameraAccess();
+        
         initScanner();
+        
+        async function testCameraAccess() {
+            try {
+                updateStatus('Testing camera access...', 'info');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        facingMode: 'user', // Use front camera for laptops
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                
+                // Directly attach stream to video element for debugging
+                videoElement.srcObject = stream;
+                videoElement.play().then(() => {
+                    updateStatus('Camera is working! Initializing scanner...', 'success');
+                }).catch(e => {
+                    updateStatus('Camera error: ' + e.message, 'error');
+                });
+                
+                // Keep stream for later use
+                window.cameraStream = stream;
+                
+            } catch (error) {
+                handleCameraError(error);
+                throw error;
+            }
+        }
         
         async function initScanner() {
             try {
@@ -72,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     locate: true
                 };
                 
-                updateStatus('Requesting camera access...', 'info');
+                updateStatus('Configuring scanner...', 'info');
                 
                 // Initialize Quagga
                 Quagga.init(config, function(err) {
@@ -82,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     updateStatus(isDesktop ? 
-                        'Camera ready - point barcode at camera' : 
-                        'Camera ready - point at barcode', 
+                        'Scanner ready - point barcode at camera' : 
+                        'Scanner ready - point at barcode', 
                         'success'
                     );
                     
@@ -91,12 +122,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     Quagga.start();
                     Quagga.onDetected(onDetected);
                     
+                    // Ensure video is visible
+                    videoElement.style.opacity = '1';
+                    
                     // Add device-specific tips
                     if (isDesktop) {
                         setTimeout(() => {
                             updateStatus('Desktop tip: Hold barcode steady about 6-12 inches from camera', 'info');
                         }, 3000);
                     }
+                });
+                
+                // Add event listener to ensure video is visible
+                videoElement.addEventListener('loadeddata', function() {
+                    console.log('Video is loaded and playing');
+                    videoElement.style.opacity = '1';
                 });
                 
             } catch (error) {
@@ -194,7 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             `<p>1. Ensure webcam is connected</p>
                              <p>2. Check browser camera permissions</p>
                              <p>3. Close other apps using camera</p>
-                             <p>4. Try Chrome or Firefox browser</p>` :
+                             <p>4. Try Chrome or Firefox browser</p>
+                             <p>5. Check if camera works in another app</p>` :
                             `<p>1. Allow camera permissions</p>
                              <p>2. Clean camera lens</p>
                              <p>3. Ensure good lighting</p>
@@ -204,8 +245,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button onclick="location.reload()" class="btn" style="background: var(--orange-medium);">
                         <i class="fas fa-redo"></i> Retry
                     </button>
+                    <button onclick="testCameraManually()" class="btn" style="background: var(--info); margin-left: 10px;">
+                        <i class="fas fa-camera"></i> Test Camera
+                    </button>
                 </div>
             `;
+        }
+        
+        function testCameraManually() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        alert('Camera is working! You should see video now.');
+                        // Try to use this stream
+                        videoElement.srcObject = stream;
+                        videoElement.play();
+                    })
+                    .catch(function(error) {
+                        alert('Camera error: ' + error.message);
+                    });
+            } else {
+                alert('Your browser does not support camera access.');
+            }
         }
         
         function handleCameraError(error) {
@@ -328,6 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 Quagga.stop();
                 Quagga.offDetected(onDetected);
             }
+            if (window.cameraStream) {
+                window.cameraStream.getTracks().forEach(track => track.stop());
+            }
         });
         
         window.addEventListener('pagehide', () => {
@@ -335,6 +399,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 Quagga.stop();
                 Quagga.offDetected(onDetected);
             }
+            if (window.cameraStream) {
+                window.cameraStream.getTracks().forEach(track => track.stop());
+            }
         });
+        
+        // Make test function available globally
+        window.testCameraManually = testCameraManually;
     }
 });
