@@ -16,11 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let lastScanTimeValue = 0;
         let scanResults = [];
         
-        // First test camera access directly
+        // ADDED: First test camera access directly
         await testCameraAccess();
         
         initScanner();
         
+        // ADDED: Function to test camera access
         async function testCameraAccess() {
             try {
                 updateStatus('Testing camera access...', 'info');
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     Quagga.start();
                     Quagga.onDetected(onDetected);
                     
-                    // Ensure video is visible
+                    // ADDED: Ensure video is visible
                     videoElement.style.opacity = '1';
                     
                     // Add device-specific tips
@@ -133,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
-                // Add event listener to ensure video is visible
+                // ADDED: Add event listener to ensure video is visible
                 videoElement.addEventListener('loadeddata', function() {
                     console.log('Video is loaded and playing');
                     videoElement.style.opacity = '1';
@@ -252,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
+        // ADDED: Manual camera test function
         function testCameraManually() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: true })
@@ -383,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Clean up
+        // Clean up - MODIFIED to also clean up camera stream
         window.addEventListener('beforeunload', () => {
             if (scanning) {
                 Quagga.stop();
@@ -404,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Make test function available globally
+        // ADDED: Make test function available globally
         window.testCameraManually = testCameraManually;
     }
 });
