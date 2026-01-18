@@ -1,4 +1,4 @@
-/* Minimalistic Scanner Styles */
+/* Minimalistic Scanner Styles - Optimized for 1D Barcodes */
 .scanner-minimal {
     min-height: 100vh;
     display: flex;
@@ -49,6 +49,15 @@
     color: transparent;
 }
 
+/* Add (1D) indicator to scanner title */
+.scanner-title-minimal::after {
+    content: " (1D)";
+    font-size: 0.8rem;
+    color: var(--orange-medium);
+    vertical-align: super;
+    margin-left: 4px;
+}
+
 .header-spacer {
     width: 80px;
 }
@@ -73,6 +82,15 @@
     object-fit: cover;
 }
 
+/* Canvas for Quagga visualization */
+.drawingBuffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
 .scanner-overlay-minimal {
     position: absolute;
     top: 0;
@@ -85,11 +103,12 @@
     background: rgba(0, 0, 0, 0.4);
 }
 
+/* 1D Barcode Optimized Scan Frame */
 .scan-frame-minimal {
-    width: 280px;
-    height: 200px;
+    width: 320px;  /* Wider for 1D barcodes */
+    height: 120px; /* Shorter height */
     border: 2px solid var(--orange-medium);
-    border-radius: 16px;
+    border-radius: 8px; /* Less rounded for 1D barcodes */
     position: relative;
     background: rgba(255, 140, 66, 0.05);
     backdrop-filter: blur(4px);
@@ -110,7 +129,7 @@
     left: -3px;
     border-right: none;
     border-bottom: none;
-    border-radius: 12px 0 0 0;
+    border-radius: 8px 0 0 0;
 }
 
 .scan-frame-minimal::after {
@@ -118,7 +137,17 @@
     right: -3px;
     border-left: none;
     border-top: none;
-    border-radius: 0 0 12px 0;
+    border-radius: 0 0 8px 0;
+}
+
+/* Additional corner indicators for better targeting */
+.scan-frame-minimal .corner-tl,
+.scan-frame-minimal .corner-tr,
+.scan-frame-minimal .corner-bl,
+.scan-frame-minimal .corner-br {
+    position: absolute;
+    width: 20px;
+    height: 20px;
 }
 
 .scanner-status-minimal {
@@ -126,7 +155,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8); /* Darker background for better visibility */
     color: white;
     padding: 10px 20px;
     border-radius: var(--radius-full);
@@ -135,7 +164,13 @@
     align-items: center;
     gap: 8px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 140, 66, 0.3); /* Orange border for visibility */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.scanner-status-minimal i {
+    font-size: 1rem;
 }
 
 .results-panel {
@@ -209,11 +244,14 @@
     line-height: 1.6;
 }
 
+/* Monospace font for barcode text */
 .result-text {
     font-size: 1rem;
     color: var(--text-dark);
     margin-bottom: 8px;
     font-weight: 500;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .result-type-minimal {
@@ -225,6 +263,13 @@
     font-size: 0.85rem;
     font-weight: 500;
     margin-bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.result-type-minimal i {
+    font-size: 0.8rem;
 }
 
 .result-time-minimal {
@@ -252,30 +297,47 @@
 .no-results p {
     font-size: 1rem;
     opacity: 0.8;
+    margin-bottom: 10px;
 }
 
-/* Scanning animation */
+.no-results .supported-formats {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    opacity: 0.7;
+}
+
+/* Scanning animation for 1D barcodes */
 .scan-line {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: var(--orange-medium);
-    animation: scan 2s infinite linear;
+    height: 2px; /* Thinner line for 1D scanning */
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--orange-medium) 50%, 
+        transparent 100%);
+    animation: scan 1.5s infinite linear;
     box-shadow: 0 0 10px var(--orange-medium);
+    z-index: 5;
 }
 
+/* 1D Barcode Scanning Animation */
 @keyframes scan {
     0% {
         top: 0;
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
     }
     100% {
         top: 100%;
+        opacity: 0;
     }
 }
 
-/* Success animation */
+/* Success animation for 1D barcode scan */
 @keyframes scanSuccess {
     0% {
         border-color: var(--orange-medium);
@@ -294,39 +356,277 @@
 @keyframes pulse {
     0% {
         transform: scale(1);
+        opacity: 1;
     }
     50% {
-        transform: scale(1.1);
+        transform: scale(1.05);
+        opacity: 0.8;
     }
     100% {
         transform: scale(1);
+        opacity: 1;
     }
 }
 
-/* Responsive */
+/* Quagga debugging visualization */
+.quagga-debug {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    z-index: 100;
+    display: none; /* Hidden by default, enable for debugging */
+}
+
+/* 1D Barcode Format Indicators */
+.barcode-format-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--orange-medium);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 100;
+    border: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+/* Scanner Controls Overlay */
+.scanner-controls-minimal {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+}
+
+.control-btn {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.control-btn:hover {
+    background: rgba(255, 140, 66, 0.8);
+    transform: scale(1.1);
+}
+
+/* Scanner Help Tooltip */
+.scanner-help {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    max-width: 300px;
+    z-index: 30;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 140, 66, 0.3);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.scanner-help h3 {
+    color: var(--orange-medium);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.scanner-help p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.scanner-help ul {
+    text-align: left;
+    font-size: 0.85rem;
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.scanner-help li {
+    margin-bottom: 5px;
+}
+
+/* Barcode Format Labels */
+.format-label {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 140, 66, 0.15);
+    color: var(--orange-medium);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+
+.format-label.ean {
+    background: rgba(46, 125, 50, 0.15);
+    color: var(--success);
+}
+
+.format-label.upc {
+    background: rgba(33, 150, 243, 0.15);
+    color: var(--info);
+}
+
+.format-label.code128 {
+    background: rgba(156, 39, 176, 0.15);
+    color: #9C27B0;
+}
+
+.format-label.code39 {
+    background: rgba(255, 152, 0, 0.15);
+    color: #FF9800;
+}
+
+/* Responsive Design for 1D Scanner */
 @media (max-width: 768px) {
     .scan-frame-minimal {
-        width: 250px;
-        height: 180px;
-    }
-    
-    .results-panel {
-        padding: 20px;
-        max-height: 35vh;
-    }
-}
-
-@media (max-width: 480px) {
-    .scan-frame-minimal {
-        width: 220px;
-        height: 160px;
+        width: 280px;
+        height: 100px;
     }
     
     .scanner-title-minimal {
         font-size: 1rem;
     }
     
+    .scanner-title-minimal::after {
+        font-size: 0.7rem;
+    }
+    
+    .results-panel {
+        padding: 20px;
+        max-height: 35vh;
+    }
+    
+    .scanner-status-minimal {
+        font-size: 0.8rem;
+        padding: 8px 16px;
+        bottom: 15px;
+    }
+    
+    .scanner-controls-minimal {
+        bottom: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scan-frame-minimal {
+        width: 240px;
+        height: 80px;
+    }
+    
+    .scanner-title-minimal {
+        font-size: 0.9rem;
+    }
+    
+    .scanner-title-minimal::after {
+        font-size: 0.6rem;
+    }
+    
     .results-title {
         font-size: 1.1rem;
+    }
+    
+    .scanner-status-minimal {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        width: 90%;
+        text-align: center;
+    }
+    
+    .result-item-minimal {
+        padding: 15px;
+    }
+    
+    .result-text {
+        font-size: 0.95rem;
+    }
+}
+
+/* Tablet Landscape Optimization */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .scan-frame-minimal {
+        width: 300px;
+        height: 110px;
+    }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    .scanner-status-minimal {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--text-white);
+        border-color: rgba(255, 140, 66, 0.5);
+    }
+    
+    .scanner-help {
+        background: rgba(30, 30, 30, 0.95);
+        border-color: rgba(255, 140, 66, 0.4);
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .scan-frame-minimal {
+        border-width: 3px;
+    }
+    
+    .scanner-status-minimal {
+        border-width: 2px;
+    }
+    
+    .scan-line {
+        height: 3px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .scan-line {
+        animation: none;
+        display: none;
+    }
+    
+    .result-item-minimal {
+        animation: none;
+    }
+    
+    .scanner-help {
+        animation: none;
     }
 }
