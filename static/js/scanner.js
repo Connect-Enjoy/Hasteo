@@ -1,35 +1,10 @@
-// Minimalistic Scanner Logic
+// Enhanced Scanner Logic with ZXing Integration
 document.addEventListener('DOMContentLoaded', function() {
     // Only run on scanner page
     if (!document.querySelector('.scanner-minimal')) return;
     
-    // Wait for ZXing library to load
-    if (typeof ZXing === 'undefined') {
-        console.error('ZXing library not loaded!');
-        updateStatus('Scanner library failed to load. Please refresh the page.', 'error');
-        
-        // Try to load it dynamically
-        loadZXingLibrary();
-        return;
-    }
-    
+    // Initialize scanner
     initializeScanner();
-    
-    async function loadZXingLibrary() {
-        updateStatus('Loading scanner library...', 'info');
-        
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1';
-        script.onload = () => {
-            console.log('ZXing library loaded dynamically');
-            initializeScanner();
-        };
-        script.onerror = () => {
-            updateStatus('Failed to load scanner library. Check internet connection.', 'error');
-        };
-        
-        document.head.appendChild(script);
-    }
     
     async function initializeScanner() {
         const videoElement = document.getElementById('scannerVideo');
@@ -39,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastScanTime = document.getElementById('lastScanTime');
         
         let codeReader = null;
-        let scannerInterval = null;
+        let isScanning = false;
         let lastScanned = '';
         let lastScanTimeValue = 0;
         let scanResults = [];
@@ -49,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         async function initScanner() {
             try {
-                updateStatus('Requesting camera access...', 'info');
+                updateStatus('Initializing scanner...', 'info');
                 
                 // Initialize ZXing
                 if (typeof ZXing === 'undefined') {
@@ -58,65 +33,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 codeReader = new ZXing.BrowserMultiFormatReader();
                 
-                // Try back camera first, fallback to any camera
+                // Camera constraints
                 let constraints = {
                     video: {
                         width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        height: { ideal: 720 },
+                        facingMode: 'environment' // Prefer back camera
                     }
                 };
                 
-                // Check if we're on mobile (likely has back camera)
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                // Get camera stream
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = stream;
                 
-                if (isMobile) {
-                    // On mobile, prefer back camera
-                    constraints.video.facingMode = { exact: 'environment' };
-                } else {
-                    // On desktop/laptop, use any camera
-                    constraints.video.facingMode = 'user'; // Front camera
-                }
+                // Start playing video
+                await videoElement.play();
                 
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    videoElement.srcObject = stream;
-                    
-                    updateStatus('Camera ready - scanning for barcodes', 'success');
-                    
-                    // Start scanning
-                    startScanning();
-                    
-                    // Handle stream ended (camera disconnected)
-                    stream.getVideoTracks()[0].onended = () => {
-                        updateStatus('Camera disconnected', 'error');
-                        stopScanning();
-                    };
-                    
-                } catch (cameraError) {
-                    // If exact facingMode fails, try without it
-                    if (cameraError.name === 'OverconstrainedError' || cameraError.name === 'ConstraintNotSatisfiedError') {
-                        updateStatus('Trying alternative camera...', 'info');
-                        
-                        // Remove exact facingMode constraint
-                        delete constraints.video.facingMode;
-                        
-                        try {
-                            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                            videoElement.srcObject = stream;
-                            
-                            updateStatus('Camera ready - scanning for barcodes', 'success');
-                            startScanning();
-                        } catch (fallbackError) {
-                            handleCameraError(fallbackError);
-                        }
-                    } else {
-                        handleCameraError(cameraError);
-                    }
-                }
+                updateStatus('Camera ready - point at barcode', 'success');
+                
+                // Start continuous scanning
+                startContinuousScanning();
+                
+                // Handle camera disconnection
+                stream.getVideoTracks()[0].onended = () => {
+                    updateStatus('Camera disconnected', 'error');
+                    stopScanning();
+                };
                 
             } catch (error) {
-                console.error('Scanner initialization error:', error);
-                updateStatus('Scanner initialization failed: ' + error.message, 'error');
+                handleCameraError(error);
             }
         }
         
@@ -131,14 +76,17 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (error.name === 'NotSupportedError') {
                 errorMessage = 'Camera not supported';
             } else if (error.name === 'OverconstrainedError') {
-                errorMessage = 'Camera constraints could not be satisfied';
+                // Try without facingMode constraint
+                errorMessage = 'Trying alternative camera...';
+                setTimeout(() => tryAlternativeCamera(), 1000);
+                return;
             } else {
                 errorMessage = 'Camera error: ' + error.message;
             }
             
             updateStatus(errorMessage, 'error');
             
-            // Show help message for laptop users
+            // Show help message for desktop users
             if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                 setTimeout(() => {
                     updateStatus('Tip: Use a mobile device for best scanning experience', 'info');
@@ -146,41 +94,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        function startScanning() {
-            if (!codeReader) return;
-            
-            scannerInterval = setInterval(scanBarcode, 300);
-        }
-        
-        function stopScanning() {
-            if (scannerInterval) {
-                clearInterval(scannerInterval);
-                scannerInterval = null;
+        async function tryAlternativeCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                        // No facingMode constraint
+                    }
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('scannerVideo');
+                videoElement.srcObject = stream;
+                await videoElement.play();
+                
+                updateStatus('Camera ready - point at barcode', 'success');
+                startContinuousScanning();
+            } catch (error) {
+                updateStatus('Failed to access camera: ' + error.message, 'error');
             }
         }
         
-        function scanBarcode() {
-            if (!videoElement.videoWidth || !codeReader) return;
+        function startContinuousScanning() {
+            if (isScanning || !codeReader) return;
             
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
-            
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            isScanning = true;
+            scanFrame();
+        }
+        
+        function stopScanning() {
+            isScanning = false;
+        }
+        
+        async function scanFrame() {
+            if (!isScanning || !videoElement.videoWidth) return;
             
             try {
-                codeReader.decodeFromCanvas(canvas)
-                    .then(result => {
-                        if (result) {
-                            processScanResult(result);
-                        }
-                    })
-                    .catch(() => {
-                        // No barcode detected - normal
-                    });
+                const result = await codeReader.decodeFromVideoElement(videoElement);
+                
+                if (result) {
+                    processScanResult(result);
+                }
             } catch (error) {
-                // Ignore decoding errors
+                // No barcode detected - this is normal
+            }
+            
+            // Continue scanning
+            if (isScanning) {
+                requestAnimationFrame(() => scanFrame());
             }
         }
         
@@ -188,8 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const now = Date.now();
             const text = result.getText();
             
-            // Prevent duplicate scans within 2 seconds
-            if (text === lastScanned && (now - lastScanTimeValue) < 2000) {
+            // Prevent duplicate scans within 1 second
+            if (text === lastScanned && (now - lastScanTimeValue) < 1000) {
                 return;
             }
             
@@ -197,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             lastScanTimeValue = now;
             
             // Add to results
-            addScanResult(text);
+            addScanResult(text, result.getBarcodeFormat());
             
             // Update UI
             updateScanCount();
@@ -206,9 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
             animateScanSuccess();
         }
         
-        function addScanResult(text) {
+        function addScanResult(text, format) {
             const result = {
                 text: text,
+                format: format,
                 type: getBarcodeType(text),
                 time: new Date(),
                 id: Date.now()
@@ -227,22 +190,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function getBarcodeType(text) {
-            if (text.startsWith('http://') || text.startsWith('https://')) {
+            if (/^https?:\/\//i.test(text)) {
                 return { name: 'URL', icon: 'fa-link', color: '#0277BD' };
-            } else if (text.includes('@') && text.includes('.')) {
-                return { name: 'Email', icon: 'fa-envelope', color: '#D93E30' };
+            } else if (/^WIFI:/i.test(text)) {
+                return { name: 'Wi-Fi Config', icon: 'fa-wifi', color: '#4CAF50' };
+            } else if (/^BEGIN:VCARD/i.test(text)) {
+                return { name: 'Contact', icon: 'fa-address-card', color: '#FF9800' };
             } else if (/^\d{12,13}$/.test(text)) {
-                return { name: 'EAN Barcode', icon: 'fa-barcode', color: '#FF8C42' };
+                return { name: 'Product (EAN/UPC)', icon: 'fa-barcode', color: '#FF6347' };
             } else if (/^\d{10}$/.test(text)) {
-                return { name: 'ISBN', icon: 'fa-book', color: '#5D4037' };
+                return { name: 'ISBN', icon: 'fa-book', color: '#795548' };
             } else if (/^[A-Z]{2}\d{10}$/.test(text)) {
-                return { name: 'Tracking', icon: 'fa-shipping-fast', color: '#2E7D32' };
+                return { name: 'Tracking', icon: 'fa-shipping-fast', color: '#2196F3' };
             } else if (/^\d{9}$/.test(text)) {
-                return { name: 'Student ID', icon: 'fa-id-card', color: '#FF6347' };
+                return { name: 'Student ID', icon: 'fa-id-card', color: '#9C27B0' };
             } else if (text.length < 50) {
-                return { name: 'Text', icon: 'fa-font', color: '#8B7355' };
+                return { name: 'Text', icon: 'fa-font', color: '#607D8B' };
             } else {
-                return { name: 'Data', icon: 'fa-database', color: '#6A1B9A' };
+                return { name: 'Data', icon: 'fa-database', color: '#3F51B5' };
             }
         }
         
@@ -269,10 +234,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="result-content-minimal">
                             <div class="result-text">${displayText}</div>
-                            ${result.text.startsWith('http') ? `<a href="${result.text}" target="_blank" style="color: ${result.type.color}; text-decoration: none; font-size: 0.9rem;">↗ Open Link</a>` : ''}
+                            ${result.text.startsWith('http') ? 
+                                `<a href="${result.text}" target="_blank" style="color: ${result.type.color}; text-decoration: none; font-size: 0.9rem;">
+                                    <i class="fas fa-external-link-alt"></i> Open Link
+                                </a>` : 
+                                ''}
                         </div>
                         <div class="result-time-minimal">
                             <i class="far fa-clock"></i> ${timeString}
+                            <span style="margin-left: 10px; font-size: 0.8rem; color: #999;">${result.format}</span>
                         </div>
                     </div>
                 `;
@@ -305,29 +275,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function updateStatus(message, type = 'info') {
             let icon = 'fa-info-circle';
-            let color = 'var(--text-light)';
+            let color = '#ffffff';
             
             switch(type) {
                 case 'success':
                     icon = 'fa-check-circle';
-                    color = 'var(--success)';
+                    color = '#4CAF50';
                     break;
                 case 'error':
                     icon = 'fa-exclamation-circle';
-                    color = 'var(--danger)';
+                    color = '#F44336';
                     break;
                 case 'warning':
                     icon = 'fa-exclamation-triangle';
-                    color = 'var(--warning)';
+                    color = '#FF9800';
                     break;
             }
             
-            scannerStatus.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
-            scannerStatus.style.color = color;
+            scannerStatus.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i> <span>${message}</span>`;
         }
         
         function playScanSound() {
             try {
+                // Simple beep sound
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -335,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                oscillator.frequency.value = 1000;
+                oscillator.frequency.value = 800;
                 oscillator.type = 'sine';
                 
                 gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
@@ -363,12 +333,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.hidden) {
                 stopScanning();
             } else {
-                startScanning();
+                startContinuousScanning();
             }
         });
         
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {
+            stopScanning();
+            if (videoElement.srcObject) {
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
+        
+        // Clean up on page hide (for PWA)
+        window.addEventListener('pagehide', () => {
             stopScanning();
             if (videoElement.srcObject) {
                 videoElement.srcObject.getTracks().forEach(track => track.stop());
