@@ -77,16 +77,12 @@ body {
 /* Glassmorphism Base Classes */
 .glass-effect {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     box-shadow: 0 8px 32px 0 var(--glass-shadow);
 }
 
 .glass-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     box-shadow: 0 8px 32px 0 var(--glass-shadow);
     border-radius: var(--radius-lg);
@@ -94,16 +90,12 @@ body {
 
 .glass-input {
     background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
     border: 1px solid var(--glass-border);
 }
 
 /* Header - Enhanced with Glassmorphism */
 header {
-    background: rgba(255, 248, 240, 0.9);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255, 248, 240, 0.95);
     border-bottom: 1px solid var(--glass-border);
     position: sticky;
     top: 0;
@@ -195,8 +187,6 @@ header {
     margin-bottom: 10px;
     border-radius: var(--radius-lg);
     color: white;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: slideIn 0.3s ease;
 }
@@ -266,10 +256,20 @@ header {
     max-width: 700px;
     margin: 0 auto 40px;
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
     padding: 20px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--glass-border);
+}
+
+/* Scanner Button - Clean without pulse animation */
+.scanner-btn {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    /* Removed pulse animation for cleaner look */
 }
 
 /* Login Page - Enhanced with Glassmorphism */
@@ -285,8 +285,6 @@ header {
     width: 100%;
     max-width: 400px;
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     padding: var(--space-xl);
     border-radius: var(--radius-xl);
     border: 1px solid var(--glass-border);
@@ -319,8 +317,6 @@ header {
     width: 100%;
     padding: 12px 16px;
     background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     font-size: 16px;
@@ -384,27 +380,6 @@ header {
     color: var(--text-dark);
 }
 
-/* Scanner Button */
-.scanner-btn {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    border-radius: var(--radius-lg);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    /* Pulse animation removed - keeping the animation keyframes for other uses */
-}
-
-/* Pulse animation kept for other potential uses */
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.7);
-    }
-    50% {
-        box-shadow: 0 0 0 10px rgba(255, 140, 66, 0);
-    }
-}
-
 /* Dashboard Styles - Enhanced with Glassmorphism */
 .dashboard {
     padding: 40px 0;
@@ -436,8 +411,6 @@ header {
 
 .stat-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     padding: 25px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--glass-border);
@@ -486,8 +459,6 @@ header {
 /* Feature Cards - Enhanced with Glassmorphism */
 .feature-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     padding: 30px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--glass-border);
@@ -582,7 +553,6 @@ header {
     border-radius: 10px;
     position: relative;
     background: rgba(255, 140, 66, 0.1);
-    backdrop-filter: blur(4px);
 }
 
 .scan-frame::before,
@@ -619,7 +589,6 @@ header {
     justify-content: space-between;
     align-items: center;
     animation: slideDown 0.3s ease;
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -655,8 +624,6 @@ header {
 /* Table Styles - Enhanced with Glassmorphism */
 .table-container {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border-radius: var(--radius-lg);
     padding: 30px;
     border: 1px solid var(--glass-border);
@@ -681,7 +648,6 @@ table {
 
 thead {
     background: var(--fox-gradient);
-    backdrop-filter: blur(10px);
 }
 
 th {
@@ -707,7 +673,6 @@ tr:hover {
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-    backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -728,7 +693,6 @@ footer {
     text-align: center;
     padding: 25px;
     background: rgba(255, 228, 196, 0.8);
-    backdrop-filter: blur(10px);
     color: var(--text-medium);
     margin-top: 40px;
     border-top: 1px solid var(--glass-border);
@@ -844,7 +808,6 @@ footer {
     padding: 8px 16px;
     border-radius: var(--radius-md);
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     transition: all 0.3s;
 }
@@ -891,7 +854,6 @@ footer {
     left: 50%;
     transform: translateX(-50%);
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
     padding: 8px 16px;
     border-radius: var(--radius-full);
     font-size: 0.9rem;
@@ -929,7 +891,6 @@ footer {
 
 .scan-result-item {
     background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     padding: 20px;
@@ -1031,6 +992,116 @@ footer {
     color: var(--text-medium);
 }
 
+/* 1D Barcode Specific Styles */
+.scanner-title-minimal::after {
+    content: " (1D)";
+    font-size: 0.8rem;
+    color: var(--orange-medium);
+    vertical-align: super;
+}
+
+/* Adjust scan frame for 1D barcodes (wider and shorter) */
+.scan-frame-minimal {
+    width: 320px;  /* Wider for 1D barcodes */
+    height: 120px; /* Shorter height */
+    border: 2px solid #00FF00; /* Bright green for high visibility */
+    border-radius: 8px; /* Less rounded for 1D barcodes */
+    position: relative;
+    background: transparent;
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+}
+
+/* Scanning line animation for 1D barcodes */
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px; /* Thinner line for 1D */
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #00FF00 50%, 
+        transparent 100%);
+    animation: scan 1.5s infinite linear;
+    box-shadow: 0 0 10px #00FF00;
+}
+
+/* Barcode result styling */
+.result-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    color: var(--text-dark);
+}
+
+/* Scanner status for 1D */
+.scanner-status-minimal {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+/* Results panel adjustments for 1D */
+.results-panel {
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(139, 115, 85, 0.2);
+    padding: 20px;
+    box-shadow: 0 -5px 30px rgba(44, 24, 16, 0.1);
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.result-type-minimal {
+    background: rgba(255, 140, 66, 0.1);
+    color: var(--orange-medium);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 1D Barcode scan animation */
+@keyframes scan {
+    0% {
+        top: 0;
+    }
+    100% {
+        top: 100%;
+    }
+}
+
+/* Responsive adjustments for 1D scanner */
+@media (max-width: 768px) {
+    .scan-frame-minimal {
+        width: 280px;
+        height: 100px;
+    }
+    
+    .scanner-title-minimal {
+        font-size: 1rem;
+    }
+    
+    .scanner-title-minimal::after {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .scan-frame-minimal {
+        width: 240px;
+        height: 80px;
+    }
+}
+
 /* Responsive adjustments for scanner */
 @media (max-width: 768px) {
     .scanner-header h1 {
@@ -1072,3 +1143,97 @@ footer {
 /* Utility Classes */
 .mt-4 { margin-top: var(--space-md); }
 .btn-sm { padding: 8px 16px; font-size: 0.9rem; }
+
+/* REMOVED all backdrop-filter properties for clarity */
+/* All existing backdrop-filter: blur() properties have been removed */
+/* All -webkit-backdrop-filter: blur() properties have been removed */
+
+/* Pulse animation removed from scanner button but kept for other uses */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 140, 66, 0);
+    }
+}
+
+/* Laptop/Desktop specific scanner optimizations */
+@media (min-width: 769px) {
+    /* Better contrast for desktop scanning */
+    .scan-frame-minimal {
+        border-color: #FF6347; /* Orange for desktop */
+    }
+    
+    .scan-line {
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            #FF6347 50%, 
+            transparent 100%);
+        box-shadow: 0 0 10px #FF6347;
+    }
+    
+    @keyframes scanSuccess {
+        0% {
+            border-color: #FF6347;
+            box-shadow: 0 0 0 0 rgba(255, 99, 71, 0.7);
+        }
+        50% {
+            border-color: #FF6347;
+            box-shadow: 0 0 20px 10px rgba(255, 99, 71, 0.3);
+        }
+        100% {
+            border-color: #FF6347;
+            box-shadow: 0 0 0 0 rgba(255, 99, 71, 0);
+        }
+    }
+}
+
+/* Accessibility improvements for scanning */
+@media (prefers-reduced-motion: reduce) {
+    .scan-line {
+        animation: none;
+        opacity: 0.7;
+    }
+    
+    .hero::before {
+        animation: none;
+    }
+    
+    .flash-message {
+        animation: none;
+    }
+    
+    .batch-counter {
+        animation: none;
+    }
+    
+    .scan-result-item {
+        animation: none;
+    }
+}
+
+/* High contrast mode for better scanning visibility */
+@media (prefers-contrast: high) {
+    .scan-frame-minimal {
+        border-width: 3px;
+        border-color: white;
+    }
+    
+    .scan-line {
+        background: white;
+        box-shadow: 0 0 10px white;
+        height: 3px;
+    }
+    
+    .scanner-status-minimal {
+        background: black;
+        border: 2px solid white;
+    }
+    
+    .result-text {
+        background: white;
+        color: black;
+        border: 1px solid black;
+    }
+}
