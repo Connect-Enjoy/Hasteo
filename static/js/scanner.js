@@ -1,9 +1,7 @@
-// Enhanced Scanner Logic with ZXing Integration
+// 1D Barcode Scanner with QuaggaJS - Laptop Compatible
 document.addEventListener('DOMContentLoaded', function() {
-    // Only run on scanner page
     if (!document.querySelector('.scanner-minimal')) return;
     
-    // Initialize scanner
     initializeScanner();
     
     async function initializeScanner() {
@@ -13,210 +11,214 @@ document.addEventListener('DOMContentLoaded', function() {
         const scanCount = document.getElementById('scanCount');
         const lastScanTime = document.getElementById('lastScanTime');
         
-        let codeReader = null;
-        let isScanning = false;
+        let scanning = false;
         let lastScanned = '';
         let lastScanTimeValue = 0;
         let scanResults = [];
         
-        // Initialize scanner
         initScanner();
         
         async function initScanner() {
             try {
                 updateStatus('Initializing scanner...', 'info');
                 
-                // Initialize ZXing
-                if (typeof ZXing === 'undefined') {
-                    throw new Error('ZXing library not available');
+                // Check if QuaggaJS is loaded
+                if (typeof Quagga === 'undefined') {
+                    throw new Error('Scanner library not loaded');
                 }
                 
-                codeReader = new ZXing.BrowserMultiFormatReader();
+                // Detect device type for camera selection
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const isDesktop = !isMobile;
                 
-                // Camera constraints
-                let constraints = {
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'environment' // Prefer back camera
+                // Configuration - SIMPLIFIED FOR LAPTOPS
+                const config = {
+                    inputStream: {
+                        name: 'Live',
+                        type: 'LiveStream',
+                        target: videoElement,
+                        constraints: {
+                            // CRITICAL FIX: Different constraints for mobile vs desktop
+                            facingMode: isMobile ? 'environment' : 'user', // 'user' for laptop front camera
+                            width: { min: 640, ideal: 1280, max: 1920 },
+                            height: { min: 480, ideal: 720, max: 1080 },
+                            frameRate: { ideal: 30, max: 60 }
+                        },
+                        area: { // Define scan area
+                            top: '30%',
+                            right: '10%',
+                            left: '10%',
+                            bottom: '30%'
+                        }
+                    },
+                    locator: {
+                        patchSize: 'medium',
+                        halfSample: true
+                    },
+                    numOfWorkers: isDesktop ? 2 : 4, // Fewer workers on desktop
+                    frequency: isDesktop ? 5 : 10,   // Slower scan on desktop
+                    decoder: {
+                        readers: [
+                            'ean_reader',
+                            'ean_8_reader',
+                            'upc_reader',
+                            'upc_e_reader',
+                            'code_128_reader',
+                            'code_39_reader',
+                            'codabar_reader',
+                            'i2of5_reader'
+                        ]
+                    },
+                    locate: true
+                };
+                
+                updateStatus('Requesting camera access...', 'info');
+                
+                // Initialize Quagga
+                Quagga.init(config, function(err) {
+                    if (err) {
+                        handleQuaggaError(err, isDesktop);
+                        return;
                     }
-                };
-                
-                // Get camera stream
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = stream;
-                
-                // Start playing video
-                await videoElement.play();
-                
-                updateStatus('Camera ready - point at barcode', 'success');
-                
-                // Start continuous scanning
-                startContinuousScanning();
-                
-                // Handle camera disconnection
-                stream.getVideoTracks()[0].onended = () => {
-                    updateStatus('Camera disconnected', 'error');
-                    stopScanning();
-                };
+                    
+                    updateStatus(isDesktop ? 
+                        'Camera ready - point barcode at camera' : 
+                        'Camera ready - point at barcode', 
+                        'success'
+                    );
+                    
+                    scanning = true;
+                    Quagga.start();
+                    Quagga.onDetected(onDetected);
+                    
+                    // Add device-specific tips
+                    if (isDesktop) {
+                        setTimeout(() => {
+                            updateStatus('Desktop tip: Hold barcode steady about 6-12 inches from camera', 'info');
+                        }, 3000);
+                    }
+                });
                 
             } catch (error) {
                 handleCameraError(error);
             }
         }
         
-        function handleCameraError(error) {
-            console.error('Camera error:', error);
-            let errorMessage = 'Camera error';
-            
-            if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-                errorMessage = 'No camera found on device';
-            } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                errorMessage = 'Camera permission denied. Please allow camera access.';
-            } else if (error.name === 'NotSupportedError') {
-                errorMessage = 'Camera not supported';
-            } else if (error.name === 'OverconstrainedError') {
-                // Try without facingMode constraint
-                errorMessage = 'Trying alternative camera...';
-                setTimeout(() => tryAlternativeCamera(), 1000);
-                return;
-            } else {
-                errorMessage = 'Camera error: ' + error.message;
-            }
-            
-            updateStatus(errorMessage, 'error');
-            
-            // Show help message for desktop users
-            if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                setTimeout(() => {
-                    updateStatus('Tip: Use a mobile device for best scanning experience', 'info');
-                }, 2000);
-            }
-        }
-        
-        async function tryAlternativeCamera() {
-            try {
-                const constraints = {
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                        // No facingMode constraint
-                    }
-                };
-                
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                const videoElement = document.getElementById('scannerVideo');
-                videoElement.srcObject = stream;
-                await videoElement.play();
-                
-                updateStatus('Camera ready - point at barcode', 'success');
-                startContinuousScanning();
-            } catch (error) {
-                updateStatus('Failed to access camera: ' + error.message, 'error');
-            }
-        }
-        
-        function startContinuousScanning() {
-            if (isScanning || !codeReader) return;
-            
-            isScanning = true;
-            scanFrame();
-        }
-        
-        function stopScanning() {
-            isScanning = false;
-        }
-        
-        async function scanFrame() {
-            if (!isScanning || !videoElement.videoWidth) return;
-            
-            try {
-                const result = await codeReader.decodeFromVideoElement(videoElement);
-                
-                if (result) {
-                    processScanResult(result);
-                }
-            } catch (error) {
-                // No barcode detected - this is normal
-            }
-            
-            // Continue scanning
-            if (isScanning) {
-                requestAnimationFrame(() => scanFrame());
-            }
-        }
-        
-        function processScanResult(result) {
+        function onDetected(result) {
             const now = Date.now();
-            const text = result.getText();
+            const code = result.codeResult.code;
             
             // Prevent duplicate scans within 1 second
-            if (text === lastScanned && (now - lastScanTimeValue) < 1000) {
+            if (code === lastScanned && (now - lastScanTimeValue) < 1000) {
                 return;
             }
             
-            lastScanned = text;
+            lastScanned = code;
             lastScanTimeValue = now;
             
-            // Add to results
-            addScanResult(text, result.getBarcodeFormat());
-            
-            // Update UI
+            addScanResult(code, result.codeResult.format);
             updateScanCount();
             updateLastScanTime();
             playScanSound();
             animateScanSuccess();
         }
         
-        function addScanResult(text, format) {
+        function addScanResult(code, format) {
             const result = {
-                text: text,
+                text: code,
                 format: format,
-                type: getBarcodeType(text),
+                type: getBarcodeType(code),
                 time: new Date(),
                 id: Date.now()
             };
             
-            // Add to beginning of array
             scanResults.unshift(result);
-            
-            // Keep only last 10 scans
             if (scanResults.length > 10) {
                 scanResults.pop();
             }
             
-            // Update UI
             updateResultsList();
         }
         
-        function getBarcodeType(text) {
-            if (/^https?:\/\//i.test(text)) {
-                return { name: 'URL', icon: 'fa-link', color: '#0277BD' };
-            } else if (/^WIFI:/i.test(text)) {
-                return { name: 'Wi-Fi Config', icon: 'fa-wifi', color: '#4CAF50' };
-            } else if (/^BEGIN:VCARD/i.test(text)) {
-                return { name: 'Contact', icon: 'fa-address-card', color: '#FF9800' };
-            } else if (/^\d{12,13}$/.test(text)) {
-                return { name: 'Product (EAN/UPC)', icon: 'fa-barcode', color: '#FF6347' };
-            } else if (/^\d{10}$/.test(text)) {
-                return { name: 'ISBN', icon: 'fa-book', color: '#795548' };
-            } else if (/^[A-Z]{2}\d{10}$/.test(text)) {
-                return { name: 'Tracking', icon: 'fa-shipping-fast', color: '#2196F3' };
-            } else if (/^\d{9}$/.test(text)) {
+        function getBarcodeType(code) {
+            if (/^\d{12,13}$/.test(code)) {
+                return { name: 'EAN-13', icon: 'fa-barcode', color: '#FF6347' };
+            } else if (/^\d{8}$/.test(code)) {
+                return { name: 'EAN-8', icon: 'fa-barcode', color: '#FF8C42' };
+            } else if (/^\d{6,12}$/.test(code)) {
+                return { name: 'UPC', icon: 'fa-barcode', color: '#FFB347' };
+            } else if (/^\d{9}$/.test(code)) {
                 return { name: 'Student ID', icon: 'fa-id-card', color: '#9C27B0' };
-            } else if (text.length < 50) {
-                return { name: 'Text', icon: 'fa-font', color: '#607D8B' };
+            } else if (/^[A-Z0-9]{10,}$/i.test(code)) {
+                return { name: 'Code 128/39', icon: 'fa-barcode', color: '#4CAF50' };
             } else {
-                return { name: 'Data', icon: 'fa-database', color: '#3F51B5' };
+                return { name: '1D Barcode', icon: 'fa-barcode', color: '#607D8B' };
             }
+        }
+        
+        function handleQuaggaError(err, isDesktop) {
+            console.error('Quagga error:', err);
+            let errorMessage = 'Scanner error';
+            
+            if (err.name === 'NotAllowedError') {
+                errorMessage = 'Camera permission denied. Please allow camera access.';
+            } else if (err.name === 'NotFoundError') {
+                errorMessage = 'No camera found. ' + 
+                    (isDesktop ? 'Check if webcam is connected.' : 'Please use a device with camera.');
+            } else if (err.name === 'NotReadableError') {
+                errorMessage = 'Camera is in use by another application.';
+            } else if (err.message && err.message.includes('environment')) {
+                errorMessage = isDesktop ? 
+                    'Using front camera. Hold barcode towards the camera.' :
+                    'Camera configuration error.';
+            } else {
+                errorMessage = `Error: ${err.message || 'Unknown'}`;
+            }
+            
+            updateStatus(errorMessage, 'error');
+            
+            // Show troubleshooting
+            showTroubleshooting(isDesktop);
+        }
+        
+        function showTroubleshooting(isDesktop) {
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h3 style="color: var(--orange-medium); margin-bottom: 15px;">
+                        <i class="fas fa-exclamation-triangle"></i> Camera Issue
+                    </h3>
+                    <div style="background: rgba(255, 140, 66, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="margin-bottom: 10px;"><strong>Troubleshooting steps:</strong></p>
+                        ${isDesktop ? 
+                            `<p>1. Ensure webcam is connected</p>
+                             <p>2. Check browser camera permissions</p>
+                             <p>3. Close other apps using camera</p>
+                             <p>4. Try Chrome or Firefox browser</p>` :
+                            `<p>1. Allow camera permissions</p>
+                             <p>2. Clean camera lens</p>
+                             <p>3. Ensure good lighting</p>
+                             <p>4. Restart app</p>`
+                        }
+                    </div>
+                    <button onclick="location.reload()" class="btn" style="background: var(--orange-medium);">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
+        
+        function handleCameraError(error) {
+            updateStatus('Error: ' + error.message, 'error');
         }
         
         function updateResultsList() {
             if (scanResults.length === 0) {
                 resultsList.innerHTML = `
                     <div class="no-results">
-                        <i class="fas fa-qrcode"></i>
-                        <p>Point your camera at a barcode to scan</p>
+                        <i class="fas fa-barcode"></i>
+                        <p>Point camera at a 1D barcode</p>
+                        <p class="supported-formats">EAN • UPC • Code 128 • Code 39</p>
                     </div>
                 `;
                 return;
@@ -225,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let html = '';
             scanResults.forEach(result => {
                 const timeString = result.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const displayText = result.text.length > 80 ? result.text.substring(0, 80) + '...' : result.text;
+                const displayText = result.text;
                 
                 html += `
                     <div class="result-item-minimal">
@@ -234,23 +236,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="result-content-minimal">
                             <div class="result-text">${displayText}</div>
-                            ${result.text.startsWith('http') ? 
-                                `<a href="${result.text}" target="_blank" style="color: ${result.type.color}; text-decoration: none; font-size: 0.9rem;">
-                                    <i class="fas fa-external-link-alt"></i> Open Link
-                                </a>` : 
-                                ''}
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                Format: <strong>${result.format}</strong>
+                            </div>
                         </div>
                         <div class="result-time-minimal">
                             <i class="far fa-clock"></i> ${timeString}
-                            <span style="margin-left: 10px; font-size: 0.8rem; color: #999;">${result.format}</span>
                         </div>
                     </div>
                 `;
             });
             
             resultsList.innerHTML = html;
-            
-            // Smooth scroll to top of results
             resultsList.scrollTop = 0;
         }
         
@@ -265,8 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateLastScanTime() {
             const now = new Date();
             lastScanTime.innerHTML = `<i class="far fa-clock"></i> ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-            
-            // Highlight
             lastScanTime.style.animation = 'none';
             setTimeout(() => {
                 lastScanTime.style.animation = 'pulse 0.5s';
@@ -297,7 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function playScanSound() {
             try {
-                // Simple beep sound
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -305,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                oscillator.frequency.value = 800;
+                oscillator.frequency.value = 1000;
                 oscillator.type = 'sine';
                 
                 gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
@@ -314,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.1);
             } catch (e) {
-                // Audio not supported - silent fail
+                // Silent fail
             }
         }
         
@@ -328,28 +322,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Handle page visibility change
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopScanning();
-            } else {
-                startContinuousScanning();
-            }
-        });
-        
-        // Clean up on page unload
+        // Clean up
         window.addEventListener('beforeunload', () => {
-            stopScanning();
-            if (videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            if (scanning) {
+                Quagga.stop();
+                Quagga.offDetected(onDetected);
             }
         });
         
-        // Clean up on page hide (for PWA)
         window.addEventListener('pagehide', () => {
-            stopScanning();
-            if (videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            if (scanning) {
+                Quagga.stop();
+                Quagga.offDetected(onDetected);
             }
         });
     }
