@@ -58,6 +58,6 @@
 
 {% block scripts %}
 <!-- Load ZXing first, then our scanner code -->
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
 <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
 {% endblock %}
