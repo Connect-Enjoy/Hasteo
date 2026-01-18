@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeScanner();
     
     async function initializeScanner() {
-        const videoElement = document.getElementById('scannerVideo');
+        const scannerContainer = document.getElementById('scannerContainer');
         const scannerStatus = document.getElementById('scannerStatus');
         const resultsList = document.getElementById('resultsList');
         const scanCount = document.getElementById('scanCount');
@@ -36,15 +36,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     inputStream: {
                         name: 'Live',
                         type: 'LiveStream',
-                        target: videoElement,
+                        target: scannerContainer, // FIXED: Use container, not video element
                         constraints: {
-                            // CRITICAL FIX: Different constraints for mobile vs desktop
-                            facingMode: isMobile ? 'environment' : 'user', // 'user' for laptop front camera
+                            // CRITICAL FIX: No facingMode for desktop
+                            ...(isMobile ? { facingMode: 'environment' } : {}),
                             width: { min: 640, ideal: 1280, max: 1920 },
                             height: { min: 480, ideal: 720, max: 1080 },
                             frameRate: { ideal: 30, max: 60 }
                         },
-                        area: { // Define scan area
+                        // FIXED: Disable area cropping for desktop
+                        area: isDesktop ? undefined : {
                             top: '30%',
                             right: '10%',
                             left: '10%',
@@ -91,9 +92,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     Quagga.start();
                     Quagga.onDetected(onDetected);
                     
-
-                    // Ensure video is visible
-                    videoElement.style.opacity = '1';
+                    // Store the media stream for cleanup
+                    Quagga.onProcessed(() => {
+                        const track = Quagga.CameraAccess.getActiveTrack();
+                        if (track) {
+                            window.cameraStream = track.getSettings ? track : null;
+                        }
+                    });
 
                     // Add device-specific tips
                     if (isDesktop) {
@@ -101,12 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             updateStatus('Desktop tip: Hold barcode steady about 6-12 inches from camera', 'info');
                         }, 3000);
                     }
-                });
-
-                // Add event listener to ensure video is visible
-                videoElement.addEventListener('loadeddata', function() {
-                    console.log('Video is loaded and playing');
-                    videoElement.style.opacity = '1';
                 });
                 
             } catch (error) {
@@ -339,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Quagga.offDetected(onDetected);
             }
             if (window.cameraStream) {
-                window.cameraStream.getTracks().forEach(track => track.stop());
+                window.cameraStream.getTracks && window.cameraStream.getTracks().forEach(track => track.stop());
             }
         });
         
@@ -349,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Quagga.offDetected(onDetected);
             }
             if (window.cameraStream) {
-                window.cameraStream.getTracks().forEach(track => track.stop());
+                window.cameraStream.getTracks && window.cameraStream.getTracks().forEach(track => track.stop());
             }
         });
     }
