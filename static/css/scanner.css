@@ -1,0 +1,526 @@
+/* Minimalistic Scanner Styles - Optimized for Student ID Barcodes */
+.scanner-minimal {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--glass-bg);
+}
+
+.scanner-header-minimal {
+    padding: 20px 0;
+    background: rgba(255, 248, 240, 0.95);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content-minimal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.back-btn-minimal {
+    color: var(--orange-medium);
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 140, 66, 0.1);
+    transition: all 0.3s;
+}
+
+.back-btn-minimal:hover {
+    background: rgba(255, 140, 66, 0.2);
+    transform: translateX(-5px);
+}
+
+.scanner-title-minimal {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: var(--fox-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.header-spacer {
+    width: 80px;
+}
+
+.scanner-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.scanner-viewport {
+    flex: 1;
+    position: relative;
+    background: var(--glass-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Camera container - centered with frame overlay */
+.camera-wrapper {
+    position: relative;
+    width: 400px;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    margin-bottom: 30px;
+}
+
+/* Video element - fills the wrapper */
+#scannerContainer {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+
+/* Scan frame overlay */
+.scan-frame-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 3px solid #9C27B0;
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.scan-frame-overlay::before,
+.scan-frame-overlay::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 4px solid #9C27B0;
+}
+
+.scan-frame-overlay::before {
+    top: -4px;
+    left: -4px;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 12px 0 0 0;
+}
+
+.scan-frame-overlay::after {
+    bottom: -4px;
+    right: -4px;
+    border-left: none;
+    border-top: none;
+    border-radius: 0 0 12px 0;
+}
+
+/* Canvas for Quagga visualization */
+.drawingBuffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Success Message */
+.success-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+    padding: 20px 30px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    z-index: 200;
+    animation: fadeInOut 2s ease;
+    box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -40%); }
+    20% { opacity: 1; transform: translate(-50%, -50%); }
+    80% { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
+.scanner-status-minimal {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    text-align: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.scanner-status-minimal i {
+    font-size: 1rem;
+}
+
+/* Camera permission placeholder */
+.camera-placeholder {
+    width: 400px;
+    height: 160px;
+    background: rgba(156, 39, 176, 0.1);
+    border: 2px dashed #9C27B0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9C27B0;
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.camera-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+.camera-placeholder p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.results-panel {
+    background: var(--glass-bg);
+    border-top: 1px solid var(--glass-border);
+    padding: 25px;
+    box-shadow: 0 -5px 30px rgba(44, 24, 16, 0.1);
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+}
+
+.results-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scan-count {
+    background: linear-gradient(135deg, #9C27B0, #673AB7);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.result-item-minimal {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 1px solid var(--glass-border);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-content-minimal {
+    line-height: 1.6;
+}
+
+/* Monospace font for student ID */
+.result-text {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.result-type-minimal {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(156, 39, 176, 0.1);
+    color: #9C27B0;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.result-type-minimal i {
+    font-size: 0.8rem;
+}
+
+.result-time-minimal {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+}
+
+.no-results i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #9C27B0;
+    opacity: 0.5;
+}
+
+.no-results p {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+/* Scanning animation */
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #9C27B0 50%, 
+        transparent 100%);
+    animation: scan 1.5s infinite linear;
+    box-shadow: 0 0 15px #9C27B0;
+    z-index: 3;
+}
+
+/* Student ID Scanning Animation */
+@keyframes scan {
+    0% {
+        top: 0;
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
+}
+
+/* Success animation for student ID scan */
+@keyframes scanSuccess {
+    0% {
+        border-color: #9C27B0;
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+    }
+    50% {
+        border-color: #4CAF50;
+        box-shadow: 0 0 30px 15px rgba(46, 125, 50, 0.3);
+    }
+    100% {
+        border-color: #9C27B0;
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Branch Badges */
+.branch-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.branch-cs {
+    background: rgba(33, 150, 243, 0.15);
+    color: #2196F3;
+}
+
+.branch-ce {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+}
+
+.branch-it {
+    background: rgba(156, 39, 176, 0.15);
+    color: #9C27B0;
+}
+
+.branch-me {
+    background: rgba(244, 67, 54, 0.15);
+    color: #F44336;
+}
+
+.branch-ee {
+    background: rgba(255, 152, 0, 0.15);
+    color: #FF9800;
+}
+
+.branch-ec {
+    background: rgba(103, 58, 183, 0.15);
+    color: #673AB7;
+}
+
+.branch-ch {
+    background: rgba(0, 150, 136, 0.15);
+    color: #009688;
+}
+
+.branch-cv {
+    background: rgba(121, 85, 72, 0.15);
+    color: #795548;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .camera-wrapper,
+    .camera-placeholder {
+        width: 320px;
+        height: 130px;
+    }
+    
+    .scanner-title-minimal {
+        font-size: 1rem;
+    }
+    
+    .results-panel {
+        padding: 20px;
+        max-height: 35vh;
+    }
+    
+    .scanner-status-minimal {
+        font-size: 0.8rem;
+        padding: 10px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .camera-wrapper,
+    .camera-placeholder {
+        width: 280px;
+        height: 110px;
+    }
+    
+    .scanner-title-minimal {
+        font-size: 0.9rem;
+    }
+    
+    .results-title {
+        font-size: 1.1rem;
+    }
+    
+    .scanner-status-minimal {
+        font-size: 0.75rem;
+        padding: 8px 16px;
+    }
+    
+    .result-item-minimal {
+        padding: 15px;
+    }
+    
+    .result-text {
+        font-size: 0.95rem;
+    }
+    
+    .camera-placeholder {
+        padding: 15px;
+    }
+    
+    .camera-placeholder i {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .camera-placeholder p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet Landscape */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .camera-wrapper,
+    .camera-placeholder {
+        width: 360px;
+        height: 140px;
+    }
+}

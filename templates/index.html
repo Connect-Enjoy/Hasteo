@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header>
+    <div class="container header-container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
+            <div class="logo-text">Hasteo</div>
+        </div>
+        
+        <div class="nav-center">
+            <a href="#student-login">Student Login</a>
+            <a href="#security-login">Security Login</a>
+            <a href="#admin-login">Admin Login</a>
+        </div>
+        
+        <!-- PWA Install Button -->
+        <div id="installContainer" style="display: none;">
+            <button id="installBtn" class="btn btn-sm" style="background: var(--orange-medium); color: white;">
+                <i class="fas fa-download"></i> Install App
+            </button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <h1>College Bus Attendance System</h1>
+            <p>Smart & Efficient Student Transportation Management</p>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('scanner') }}" class="btn">
+                    <i class="fas fa-barcode"></i> Try our Scanner
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="container" style="padding: 60px 0;">
+        <div style="text-align: center;">
+            <h2 style="margin-bottom: 30px;">Features</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                <div class="feature-card">
+                    <i class="fas fa-barcode" style="font-size: 3rem; color: var(--orange-medium); margin-bottom: 20px;"></i>
+                    <h3>Barcode Scanning</h3>
+                    <p>Quickly scan student IDs with phone camera</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-bus" style="font-size: 3rem; color: var(--orange-medium); margin-bottom: 20px;"></i>
+                    <h3>Bus Tracking</h3>
+                    <p>Track bus arrival and departure times</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt" style="font-size: 3rem; color: var(--orange-medium); margin-bottom: 20px;"></i>
+                    <h3>PWA Support</h3>
+                    <p>Install as app, works offline</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--orange-medium); margin-bottom: 20px;"></i>
+                    <h3>Real-time Reports</h3>
+                    <p>Live dashboard with attendance statistics</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        © 2026 College Bus Attendance System. All rights reserved.
+    </div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // PWA Installation
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        const installContainer = document.getElementById('installContainer');
+        const installBtn = document.getElementById('installBtn');
+        
+        if (installContainer && installBtn) {
+            installContainer.style.display = 'block';
+            
+            installBtn.addEventListener('click', () => {
+                installContainer.style.display = 'none';
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted install');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        }
+    });
+    
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA installed successfully');
+        const installContainer = document.getElementById('installContainer');
+        if (installContainer) {
+            installContainer.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+    
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => {
+                    console.log('Service Worker registered:', reg);
+                })
+                .catch(err => console.log('Service Worker registration failed:', err));
+        });
+    }
+</script>
+{% endblock %}
