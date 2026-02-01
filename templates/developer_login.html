@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Developer Login - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <!-- No header - hidden as requested -->
+    <header class="login-header" style="display: none;"></header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="login-hero">
+            <div class="login-form-container">
+                <!-- Developer logo (clickable to go back home) -->
+                <div style="text-align: center; margin-bottom: 30px; cursor: pointer;" id="goHomeBtn">
+                    <div style="display: inline-flex; align-items: center; gap: 12px;">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                             alt="Hasteo Logo" 
+                             style="width: 40px; height: 40px; border-radius: 8px;">
+                        <div style="font-size: 1.8rem; font-weight: 600; 
+                                    background: linear-gradient(135deg, #FFE4C4 0%, #FFB347 50%, #FF6347 100%);
+                                    -webkit-background-clip: text;
+                                    background-clip: text;
+                                    color: transparent;">
+                            Hasteo
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="login-title">Developer Portal</h2>
+                <p style="text-align: center; color: var(--text-light); margin-bottom: 30px; font-size: 0.9rem;">
+                    Internal development access
+                </p>
+                
+                <form method="POST" action="{{ url_for('developer_login') }}" class="login-form">
+                    <div class="login-form-group">
+                        <label for="developer_id">Developer ID *</label>
+                        <input type="text" id="developer_id" name="developer_id" required 
+                               placeholder="Enter Developer ID">
+                    </div>
+                    
+                    <div class="login-form-group">
+                        <label for="password">Password *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="password" name="password" required 
+                                   placeholder="Enter developer password">
+                            <button type="button" class="password-toggle" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-light); cursor: pointer;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="login-btn" style="background: linear-gradient(135deg, #673AB7 0%, #512DA8 100%);">
+                        <i class="fas fa-code"></i> Access Developer Tools
+                    </button>
+                </form>
+                
+                <div class="login-links">
+                    <p style="color: var(--text-light); font-size: 0.85rem;">
+                        <i class="fas fa-exclamation-triangle"></i> Internal use only - Development environment
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+<script>
+    // Home button functionality
+    document.getElementById('goHomeBtn')?.addEventListener('click', function() {
+        window.location.href = "{{ url_for('index') }}";
+    });
+</script>
+{% endblock %}
