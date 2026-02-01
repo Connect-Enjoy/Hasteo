@@ -122,88 +122,6 @@ body {
     scrollbar-gutter: stable both-edges;
 }
 
-/* Container scrollbars */
-.scroll-container,
-.results-list,
-.data-table,
-.table-container,
-.results-panel {
-    scrollbar-width: auto;
-    scrollbar-color: var(--orange-medium) rgba(255, 248, 240, 0.9);
-}
-
-.scroll-container::-webkit-scrollbar,
-.results-list::-webkit-scrollbar,
-.data-table::-webkit-scrollbar,
-.table-container::-webkit-scrollbar,
-.results-panel::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
-}
-
-.scroll-container::-webkit-scrollbar-track,
-.results-list::-webkit-scrollbar-track,
-.data-table::-webkit-scrollbar-track,
-.table-container::-webkit-scrollbar-track,
-.results-panel::-webkit-scrollbar-track {
-    background: rgba(255, 248, 240, 0.7);
-    border-radius: 10px;
-    border: 1px solid rgba(139, 115, 85, 0.1);
-    margin: 4px;
-}
-
-.scroll-container::-webkit-scrollbar-thumb,
-.results-list::-webkit-scrollbar-thumb,
-.data-table::-webkit-scrollbar-thumb,
-.table-container::-webkit-scrollbar-thumb,
-.results-panel::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, 
-        rgba(255, 179, 71, 0.9),
-        rgba(255, 140, 66, 0.95)
-    );
-    border-radius: 10px;
-    border: 3px solid rgba(255, 248, 240, 0.9);
-    box-shadow: 0 2px 8px rgba(255, 99, 71, 0.3);
-}
-
-.scroll-container::-webkit-scrollbar-thumb:hover,
-.results-list::-webkit-scrollbar-thumb:hover,
-.data-table::-webkit-scrollbar-thumb:hover,
-.table-container::-webkit-scrollbar-thumb:hover,
-.results-panel::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, 
-        rgba(255, 140, 66, 0.95),
-        rgba(255, 99, 71, 0.95)
-    );
-}
-
-/* Mobile Optimization */
-@media (max-width: 768px) {
-    ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        border: 2px solid rgba(255, 248, 240, 0.95);
-    }
-}
-
-/* Accessibility Support */
-@media (prefers-reduced-motion: reduce) {
-    ::-webkit-scrollbar-thumb {
-        transition: none;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        transform: none;
-    }
-    
-    html {
-        scroll-behavior: auto;
-    }
-}
-
 /* ====================== */
 /* RESET & BASE STYLES */
 /* ====================== */
@@ -230,7 +148,7 @@ body {
 }
 
 /* ====================== */
-/* HEADER */
+/* HEADER & LOGO */
 /* ====================== */
 
 header {
@@ -248,10 +166,28 @@ header {
     align-items: center;
 }
 
+/* Default logo-container style (static) */
 .logo-container {
     display: flex;
     align-items: center;
     gap: 12px;
+    text-decoration: none;
+    cursor: pointer; /* Keep cursor pointer for clickable */
+}
+
+/* Developer logo link (homepage) - static look */
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    /* No hover effects for static look */
+}
+
+.logo-link:hover {
+    /* No transform or animation - static look */
+    opacity: 0.9; /* Very subtle feedback */
 }
 
 .logo-img {
@@ -265,17 +201,71 @@ header {
     color: white;
     font-weight: bold;
     font-size: 18px;
+    object-fit: cover;
+    /* No transition - static look */
 }
 
 .logo-text {
     font-size: 1.8rem;
     font-weight: 600;
-    color: var(--text-dark);
+    background: var(--fox-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* No transition - static look */
+}
+
+/* Developer login page logo (different styling) */
+.developer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.developer-logo:hover {
+    opacity: 0.9; /* Subtle feedback */
+}
+
+.developer-logo .logo-img {
+    width: 40px;
+    height: 40px;
+    background: var(--fox-gradient);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    object-fit: cover;
+}
+
+.developer-logo .logo-text {
+    font-size: 1.8rem;
+    font-weight: 600;
     background: var(--fox-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 }
+
+/* Login page header (different styling) */
+.login-header .logo-container,
+.login-header .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    /* No special effects for login pages */
+}
+
+/* ====================== */
+/* NAVIGATION */
+/* ====================== */
 
 .nav-center {
     display: flex;
@@ -328,6 +318,12 @@ header {
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.3s;
+}
+
+#installBtn:hover {
+    background: var(--orange-dark);
+    transform: translateY(-2px);
 }
 
 /* ====================== */
