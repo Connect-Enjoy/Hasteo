@@ -3,15 +3,17 @@
 {% block content %}
 <header>
     <div class="container header-container">
-        <div class="logo-container">
+        <!-- Developer Login Link as Logo -->
+        <a href="{{ url_for('developer_login') }}" class="logo-container" 
+           id="developerLoginBtn" title="Developer Access (Click)">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
             <div class="logo-text">Hasteo</div>
-        </div>
+        </a>
         
         <div class="nav-center">
-            <a href="#student-login">Student Login</a>
-            <a href="#security-login">Security Login</a>
-            <a href="#admin-login">Admin Login</a>
+            <a href="{{ url_for('student_login') }}">Student Login</a>
+            <a href="{{ url_for('security_login') }}">Security Login</a>
+            <a href="{{ url_for('admin_login') }}">Admin Login</a>
         </div>
         
         <!-- PWA Install Button -->
