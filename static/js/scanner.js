@@ -1,4 +1,5 @@
 // Student ID Barcode Scanner with QuaggaJS - Hasteo Project
+
 document.addEventListener('DOMContentLoaded', function() {
     if (!document.querySelector('.scanner-minimal')) return;
     
@@ -195,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cleanCode = code.trim().toUpperCase();
         
         // Exact pattern: S + 2 letters + / + 5 digits + / + 2 digits
-        const pattern = /^S[A-Z]{2}\/\d{5}\/\d{2}$/;
+        const pattern = /^S(AU|CE|CV|CS|EE|CO|CT|EC|EV|ME)\/\d{5}\/\d{2}$/;
         
         return pattern.test(cleanCode);
     }
@@ -205,9 +206,92 @@ document.addEventListener('DOMContentLoaded', function() {
         return code.trim().toUpperCase();
     }
     
+    // Get complete branch information
+    function getBranchInfo(branchCode) {
+        const branches = {
+            'AU': {
+                name: 'Automobile Engineering',
+                class: 'branch-au',
+                color: '#E91E63',
+                icon: 'fa-car'
+            },
+            'CE': {
+                name: 'Civil Engineering',
+                class: 'branch-ce',
+                color: '#009688',
+                icon: 'fa-building'
+            },
+            'CV': {
+                name: 'Civil & Environmental Engineering',
+                class: 'branch-cv',
+                color: '#795548',
+                icon: 'fa-tree'
+            },
+            'CS': {
+                name: 'Computer Science & Engineering',
+                class: 'branch-cs',
+                color: '#2196F3',
+                icon: 'fa-laptop-code'
+            },
+            'EE': {
+                name: 'Electrical & Electronics Engineering',
+                class: 'branch-ee',
+                color: '#FF9800',
+                icon: 'fa-bolt'
+            },
+            'CO': {
+                name: 'Computer Science & Engineering (Data Science)',
+                class: 'branch-co',
+                color: '#673AB7',
+                icon: 'fa-chart-line'
+            },
+            'CT': {
+                name: 'Computer Science & Engineering (AI)',
+                class: 'branch-ct',
+                color: '#9C27B0',
+                icon: 'fa-robot'
+            },
+            'EC': {
+                name: 'Electronics & Communication Engineering',
+                class: 'branch-ec',
+                color: '#4CAF50',
+                icon: 'fa-satellite-dish'
+            },
+            'EV': {
+                name: 'Electronics & Communication Engineering (VLSI)',
+                class: 'branch-ev',
+                color: '#FF5722',
+                icon: 'fa-microchip'
+            },
+            'ME': {
+                name: 'Mechanical Engineering',
+                class: 'branch-me',
+                color: '#F44336',
+                icon: 'fa-cogs'
+            }
+        };
+        
+        return branches[branchCode] || {
+            name: `${branchCode} Branch`,
+            class: 'branch-cs',
+            color: '#2196F3',
+            icon: 'fa-graduation-cap'
+        };
+    }
+    
+    // Get branch name from code
+    function getBranchName(branchCode) {
+        return getBranchInfo(branchCode).name;
+    }
+    
+    // Get branch CSS class
+    function getBranchClass(branchCode) {
+        return getBranchInfo(branchCode).class;
+    }
+    
     // Show warning for invalid format
     function showInvalidFormatWarning(rawCode) {
-        updateStatus('Invalid format', 'warning');
+        updateStatus('Invalid student ID format', 'warning');
         
         // Visual feedback
         const scanFrame = document.querySelector('.scan-frame-overlay');
@@ -277,43 +361,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
     
-    // Get branch name from code
-    function getBranchName(branchCode) {
-        const branchMap = {
-            'CS': 'Computer Science',
-            'CE': 'Computer Engineering',
-            'IT': 'Information Technology',
-            'ME': 'Mechanical Engineering',
-            'EE': 'Electrical Engineering',
-            'EC': 'Electronics & Communication',
-            'CH': 'Chemical Engineering',
-            'CV': 'Civil Engineering'
-        };
-        
-        return branchMap[branchCode] || `${branchCode} Branch`;
-    }
-    
-    // Get branch CSS class
-    function getBranchClass(branchCode) {
-        const branchClassMap = {
-            'CS': 'branch-cs',
-            'CE': 'branch-ce',
-            'IT': 'branch-it',
-            'ME': 'branch-me',
-            'EE': 'branch-ee',
-            'EC': 'branch-ec',
-            'CH': 'branch-ch',
-            'CV': 'branch-cv'
-        };
-        
-        return branchClassMap[branchCode] || 'branch-cs';
-    }
-    
     function addScanResult(code, format) {
         const [branchCode, studentNumber, year] = code.split('/');
         const cleanBranchCode = branchCode.substring(1);
-        const branchName = getBranchName(cleanBranchCode);
-        const branchClass = getBranchClass(cleanBranchCode);
+        const branchInfo = getBranchInfo(cleanBranchCode);
         
         const result = {
             text: code,
@@ -324,9 +375,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: '#9C27B0'
             },
             details: {
-                branch: branchName,
+                branch: branchInfo.name,
                 branchCode: cleanBranchCode,
-                branchClass: branchClass,
+                branchClass: branchInfo.class,
+                branchIcon: branchInfo.icon,
                 studentNumber: studentNumber,
                 year: `20${year}`,
                 shortYear: year
@@ -380,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="margin-top: 10px;">
                             <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                                 <span class="${result.details.branchClass} branch-badge">
-                                    <i class="fas fa-graduation-cap"></i> ${result.details.branch}
+                                    <i class="fas ${result.details.branchIcon}"></i> ${result.details.branch}
                                 </span>
                                 <span style="background: rgba(0, 0, 0, 0.08); color: #555; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">
                                     <i class="fas fa-hashtag"></i> ${result.details.studentNumber}
