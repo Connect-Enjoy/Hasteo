@@ -411,37 +411,12 @@
     margin-bottom: 5px;
 }
 
-.branch-cs {
-    background: rgba(33, 150, 243, 0.15);
-    color: #2196F3;
+.branch-au {
+    background: rgba(233, 30, 99, 0.15);
+    color: #E91E63;
 }
 
 .branch-ce {
-    background: rgba(76, 175, 80, 0.15);
-    color: #4CAF50;
-}
-
-.branch-it {
-    background: rgba(156, 39, 176, 0.15);
-    color: #9C27B0;
-}
-
-.branch-me {
-    background: rgba(244, 67, 54, 0.15);
-    color: #F44336;
-}
-
-.branch-ee {
-    background: rgba(255, 152, 0, 0.15);
-    color: #FF9800;
-}
-
-.branch-ec {
-    background: rgba(103, 58, 183, 0.15);
-    color: #673AB7;
-}
-
-.branch-ch {
     background: rgba(0, 150, 136, 0.15);
     color: #009688;
 }
@@ -449,6 +424,41 @@
 .branch-cv {
     background: rgba(121, 85, 72, 0.15);
     color: #795548;
+}
+
+.branch-cs {
+    background: rgba(33, 150, 243, 0.15);
+    color: #2196F3;
+}
+
+.branch-ee {
+    background: rgba(255, 152, 0, 0.15);
+    color: #FF9800;
+}
+
+.branch-co {
+    background: rgba(103, 58, 183, 0.15);
+    color: #673AB7;
+}
+
+.branch-ct {
+    background: rgba(156, 39, 176, 0.15);
+    color: #9C27B0;
+}
+
+.branch-ec {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+}
+
+.branch-ev {
+    background: rgba(255, 87, 34, 0.15);
+    color: #FF5722;
+}
+
+.branch-me {
+    background: rgba(244, 67, 54, 0.15);
+    color: #F44336;
 }
 
 /* Responsive Design */
