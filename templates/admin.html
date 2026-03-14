@@ -11,7 +11,6 @@
 <body class="admin-body">
     <header class="admin-header">
         <div class="container header-container">
-            <!-- Original Hasteo Logo - Same as main site -->
             <a href="{{ url_for('index') }}" class="logo-container">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
                 <div class="logo-text">Hasteo</div>
@@ -21,8 +20,11 @@
                 <a href="{{ url_for('admin_dashboard') }}" class="active">
                     <i class="fas fa-chart-pie"></i> Dashboard
                 </a>
-                <a href="#" onclick="handleCardClick('Manage Users')">
+                <a href="{{ url_for('admin_users') }}">
                     <i class="fas fa-users-cog"></i> Manage Users
+                </a>
+                <a href="{{ url_for('admin_buses') }}">
+                    <i class="fas fa-bus"></i> Manage Buses
                 </a>
                 <a href="#" onclick="handleCardClick('Daily Report')">
                     <i class="fas fa-chart-line"></i> Daily Report
@@ -32,7 +34,7 @@
             <div class="admin-user">
                 <i class="fas fa-user-shield"></i>
                 <span>Admin</span>
-                <a href="#" onclick="return confirmLogout()" style="color: var(--text-secondary); margin-left: 5px;" title="Logout">
+                <a href="{{ url_for('admin_logout') }}" id="logoutBtn" class="logout-link" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
@@ -44,7 +46,7 @@
             {% if messages %}
                 <div class="flash-messages">
                     {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
+                        <div class="flash-message {{ category }}" data-category="{{ category }}">
                             <i class="fas 
                                 {% if category == 'success' %}fa-check-circle
                                 {% elif category == 'error' %}fa-exclamation-circle
@@ -64,15 +66,50 @@
             <p>Manage your college bus attendance system</p>
         </div>
 
-        <!-- Compact Dashboard Cards - Only Two Main Options -->
+        <!-- Dashboard Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-user-graduate"></i>
+                <div class="stat-value">{{ student_count }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shield-alt"></i>
+                <div class="stat-value">{{ security_count }}</div>
+                <div class="stat-label">Security Personnel</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-bus"></i>
+                <div class="stat-value">{{ bus_count }}</div>
+                <div class="stat-label">Active Buses</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-qrcode"></i>
+                <div class="stat-value">{{ total_scans }}</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+        </div>
+
+        <!-- Quick Access Cards -->
         <div class="admin-dashboard-grid">
             <!-- Manage Users Card -->
-            <a href="#" class="admin-dashboard-card" onclick="handleCardClick('Manage Users')">
+            <a href="{{ url_for('admin_users') }}" class="admin-dashboard-card">
                 <i class="fas fa-users-cog"></i>
                 <h3>Manage Users</h3>
-                <p>Add, edit, or remove students and security personnel. Control access and permissions.</p>
+                <p>Add, edit, or remove students and security personnel. Manage user accounts and permissions.</p>
                 <div class="card-footer">
                     <span>Manage Users</span>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- Manage Buses Card -->
+            <a href="{{ url_for('admin_buses') }}" class="admin-dashboard-card">
+                <i class="fas fa-bus"></i>
+                <h3>Manage Buses</h3>
+                <p>Add and manage bus details, routes, drivers, and bus status. Track bus fleet information.</p>
+                <div class="card-footer">
+                    <span>Manage Buses</span>
                     <i class="fas fa-arrow-right"></i>
                 </div>
             </a>
@@ -83,13 +120,41 @@
                 <h3>Daily Report</h3>
                 <p>View attendance reports, scan statistics, and system analytics. Track daily activity.</p>
                 <div class="card-footer">
-                    <span>View Reports</span>
-                    <i class="fas fa-arrow-right"></i>
+                    <span>Coming Soon</span>
+                    <i class="fas fa-clock"></i>
                 </div>
             </a>
         </div>
 
-        <!-- Simple Footer Note -->
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <h3><i class="fas fa-history"></i> Today's Overview</h3>
+            <div class="activity-stats">
+                <div class="activity-item">
+                    <i class="fas fa-qrcode"></i>
+                    <div>
+                        <strong>{{ today_scans }}</strong>
+                        <span>Scans Today</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>{{ now.strftime('%I:%M %p') }}</strong>
+                        <span>Current Time</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <i class="fas fa-calendar-day"></i>
+                    <div>
+                        <strong>{{ now.strftime('%d %b, %Y') }}</strong>
+                        <span>Current Date</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Note -->
         <div style="text-align: center; margin-top: 50px; color: var(--text-secondary); font-size: 0.9rem;">
             <i class="fas fa-shield-alt"></i> Administrative access only
         </div>
@@ -100,4 +165,11 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+function handleCardClick(feature) {
+    if (feature === 'Daily Report') {
+        alert('Daily Reports feature is coming soon!');
+    }
+}
+</script>
 {% endblock %}
