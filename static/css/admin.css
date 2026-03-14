@@ -1,0 +1,361 @@
+/* admin.css - Hasteo Admin Dashboard Styles */
+
+:root {
+  --admin-card-bg: rgba(255, 255, 255, 0.05);
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-success: #4CAF50;
+  --admin-warning: #ffbb33;
+  --admin-danger: #ff4444;
+  --admin-info: #33b5e5;
+}
+
+/* Admin Layout */
+.admin-body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-purple), var(--bg-blue), var(--bg-pink));
+  background-size: 300% 300%;
+  animation: gradientMove 12s ease infinite;
+}
+
+/* Admin Header - Extends main header styles */
+.admin-header {
+  background: rgba(0,0,0,0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 5px 0;
+}
+
+.admin-header .header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 30px;
+}
+
+/* Reuse main logo styles but override for admin */
+.admin-header .logo-container {
+  text-decoration: none;
+}
+
+.admin-header .logo-img {
+  height: 48px;
+  width: auto;
+  border-radius: 8px;
+}
+
+.admin-header .logo-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #fff, var(--bg-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Admin Navigation */
+.admin-nav {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.admin-nav a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 16px 18px 16px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.admin-nav a i {
+  font-size: 1.1rem;
+  color: var(--bg-pink);
+  transition: all 0.3s ease;
+}
+
+.admin-nav a::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--bg-pink);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+  opacity: 0;
+  box-shadow: 0 0 10px var(--bg-pink);
+}
+
+.admin-nav a:hover::after {
+  width: 60%;
+  opacity: 1;
+}
+
+.admin-nav a:hover i {
+  transform: scale(1.1);
+}
+
+.admin-nav a.active {
+  background: transparent;
+}
+
+.admin-nav a.active i {
+  color: white;
+}
+
+/* Admin User Info */
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.05);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.admin-user i {
+  color: var(--bg-pink);
+  font-size: 1.2rem;
+}
+
+.admin-user span {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* Main Container */
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 30px;
+}
+
+/* Page Header - Reuses gradient text from main */
+.admin-page-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.admin-page-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #ffffff, var(--bg-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 30px rgba(255,45,117,0.3);
+}
+
+.admin-page-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Compact Dashboard Cards - Only for the two main options */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.admin-dashboard-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  padding: 30px 25px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border: 1px solid var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.admin-dashboard-card:hover::before {
+  left: 100%;
+}
+
+.admin-dashboard-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--bg-pink);
+  box-shadow: 0 0 30px rgba(255,45,117,0.2);
+}
+
+.admin-dashboard-card i {
+  font-size: 2.8rem;
+  color: var(--bg-pink);
+  margin-bottom: 15px;
+  transition: transform 0.3s ease;
+  text-shadow: 0 0 20px rgba(255,45,117,0.3);
+}
+
+.admin-dashboard-card:hover i {
+  transform: scale(1.1);
+}
+
+.admin-dashboard-card h3 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.admin-dashboard-card p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-size: 0.95rem;
+  margin: 0 0 15px 0;
+}
+
+.card-footer {
+  color: var(--bg-pink);
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.admin-dashboard-card:hover .card-footer {
+  opacity: 1;
+}
+
+/* Flash Messages - Reuse main styles but with positioning */
+.flash-messages {
+  position: fixed;
+  top: 100px;
+  right: 30px;
+  z-index: 1100;
+  max-width: 400px;
+}
+
+.flash-message {
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-md);
+  color: white;
+  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: slideInRight 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.flash-message.success { border-left: 4px solid var(--admin-success); }
+.flash-message.error { border-left: 4px solid var(--admin-danger); }
+.flash-message.warning { border-left: 4px solid var(--admin-warning); }
+.flash-message.info { border-left: 4px solid var(--admin-info); }
+
+.flash-message i {
+  font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 400px;
+  }
+  
+  .admin-header .header-container {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 20px;
+  }
+  
+  .admin-nav {
+    gap: 15px;
+    justify-content: center;
+  }
+  
+  .admin-page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .admin-container {
+    padding: 20px;
+  }
+  
+  .flash-messages {
+    left: 20px;
+    right: 20px;
+    top: 80px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-dashboard-card {
+    padding: 25px 20px;
+  }
+  
+  .admin-dashboard-card i {
+    font-size: 2.4rem;
+  }
+  
+  .admin-dashboard-card h3 {
+    font-size: 1.6rem;
+  }
+  
+  .admin-nav {
+    gap: 10px;
+  }
+  
+  .admin-nav a {
+    padding: 8px 12px 14px 12px;
+    font-size: 0.95rem;
+  }
+  
+  .admin-user {
+    padding: 6px 12px;
+  }
+}

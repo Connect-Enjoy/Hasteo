@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Student ID Scanner - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="scanner-minimal">
+    <!-- Minimal Header -->
+    <div class="scanner-header-minimal">
+        <div class="container header-content-minimal">
+            <a href="{{ url_for('index') }}" class="back-btn-minimal">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <div class="scanner-title-minimal">Student ID Scanner</div>
+            <div class="header-spacer"></div>
+        </div>
+    </div>
+
+    <!-- Scanner Viewport -->
+    <div class="scanner-body">
+        <div class="scanner-viewport">
+            <!-- Camera Placeholder (shown when camera not available) -->
+            <div class="camera-placeholder">
+                <i class="fas fa-camera"></i>
+                <p>Requesting camera access...<br><small>Please allow camera permission</small></p>
+            </div>
+            
+            <!-- Camera Wrapper (shown when camera is active) -->
+            <div class="camera-wrapper" style="display: none;">
+                <!-- Quagga will inject video here -->
+                <div id="scannerContainer"></div>
+                <!-- Scan frame overlay -->
+                <div class="scan-frame-overlay"></div>
+            </div>
+            
+            <!-- Scanner Status -->
+            <div class="scanner-status-minimal" id="scannerStatus">
+                <i class="fas fa-video"></i> <span>Initializing scanner...</span>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <div class="results-header">
+                <div class="results-title">
+                    <i class="fas fa-id-card"></i> Scanned IDs
+                    <div class="scan-count" id="scanCount">0</div>
+                </div>
+                <div class="result-time-minimal" id="lastScanTime">
+                    <i class="far fa-clock"></i> --
+                </div>
+            </div>
+            
+            <div class="results-list" id="resultsList">
+                <div class="no-results">
+                    <i class="fas fa-id-card"></i>
+                    <p>Align student ID within frame</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Load QuaggaJS for barcode scanning -->
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+
+<!-- Keyboard shortcuts -->
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.location.href = "{{ url_for('index') }}";
+    }
+});
+
+// Retry function for error recovery
+function retryScanner() {
+    if (window.retryScanner) {
+        window.retryScanner();
+    } else {
+        location.reload();
+    }
+}
+</script>
+{% endblock %}
