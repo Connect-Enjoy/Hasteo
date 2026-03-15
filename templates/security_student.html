@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Student Logs - Hasteo Security{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<body class="security-body">
+    <header class="security-header">
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
+                <div class="logo-text">Hasteo</div>
+            </a>
+            
+            <nav class="security-nav">
+                <a href="{{ url_for('security_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{{ url_for('security_bus_logs') }}">
+                    <i class="fas fa-bus"></i> Bus Logs
+                </a>
+                <a href="{{ url_for('security_student_logs') }}" class="active">
+                    <i class="fas fa-users"></i> Student Logs
+                </a>
+            </nav>
+            
+            <div class="security-user">
+                <i class="fas fa-shield-alt"></i>
+                <span>{{ session.get('security_name', 'Security') }}</span>
+                <a href="{{ url_for('security_logout') }}" id="logoutBtn" class="logout-link" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="security-container">
+        <div class="flash-messages"></div>
+
+        <div class="security-page-header">
+            <h1>Student Logs</h1>
+            <p>Scan and manage student attendance</p>
+        </div>
+
+        <div class="student-logs-container">
+            <!-- Left Sidebar: Bus List -->
+            <div class="bus-sidebar">
+                <h3><i class="fas fa-bus"></i> Select Bus</h3>
+                {% if active_buses %}
+                    {% for bus in active_buses %}
+                    <div class="bus-sidebar-item" data-bus-id="{{ bus[0] }}">
+                        <h4>{{ bus[1] }}</h4>
+                        <p>{{ bus[2] }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: rgba(255, 255, 255, 0.7); text-align: center;">No active buses available</p>
+                {% endif %}
+            </div>
+
+            <!-- Right Panel: Scans -->
+            <div class="scans-panel">
+                <!-- Current Session Scans -->
+                <div class="scans-header">
+                    <h3><i class="fas fa-hourglass-half"></i> Current Session Scans</h3>
+                    <span class="scan-count" id="scanCount">{{ current_scans|length }}</span>
+                </div>
+
+                <div id="selectedBusInfo" style="margin-bottom: 20px; display: none;">
+                    <p style="color: rgba(255, 255, 255, 0.7);">
+                        <i class="fas fa-bus" style="color: #00bcd4;"></i> 
+                        Selected Bus: <span id="selectedBusName" style="color: white; font-weight: 600;"></span>
+                    </p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="scans-table" id="scansTable">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Branch</th>
+                                <th>Residence</th>
+                                <th>Bus</th>
+                                <th>Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scansTableBody">
+                            {% if current_scans %}
+                                {% for scan in current_scans %}
+                                <tr data-scan-id="{{ scan[0] }}">
+                                    <td><strong>{{ scan[1] }}</strong></td>
+                                    <td>{{ scan[2] }}</td>
+                                    <td>{{ scan[3] }}</td>
+                                    <td>
+                                        <span class="residence-badge-small {{ scan[4] }}">
+                                            {{ 'Day Scholar' if scan[4] == 'day_scholar' else 'Hosteller' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ scan[5] }}</td>
+                                    <td>{{ scan[6].strftime('%I:%M %p') if scan[6] else '' }}</td>
+                                    <td>
+                                        <button class="btn-delete-scan" data-scan-id="{{ scan[0] }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="no-scans">
+                                        <i class="fas fa-qrcode"></i>
+                                        <p>No scans in current session. Select a bus and start scanning.</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="#" id="scanButton" class="btn-scan" style="pointer-events: none; opacity: 0.5;">
+                        <i class="fas fa-qrcode"></i> Start Scanning
+                    </a>
+                    <button class="btn-submit" id="submitScansBtn" {% if not current_scans %}disabled{% endif %}>
+                        <i class="fas fa-cloud-upload-alt"></i> Submit All
+                    </button>
+                    <button class="btn-clear" id="clearSessionBtn" {% if not current_scans %}disabled{% endif %}>
+                        <i class="fas fa-eraser"></i> Clear Session
+                    </button>
+                </div>
+
+                <!-- Today's Permanent Scans -->
+                <div style="margin-top: 40px;">
+                    <div class="scans-header">
+                        <h3><i class="fas fa-check-circle"></i> Today's Submitted Scans</h3>
+                        <span class="scan-count" id="permanentScanCount">{{ permanent_scans|length }}</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="scans-table" id="permanentScansTable">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Branch</th>
+                                    <th>Residence</th>
+                                    <th>Bus</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="permanentScansTableBody">
+                                {% if permanent_scans %}
+                                    {% for scan in permanent_scans %}
+                                    <tr>
+                                        <td><strong>{{ scan[1] }}</strong></td>
+                                        <td>{{ scan[2] }}</td>
+                                        <td>{{ scan[3] }}</td>
+                                        <td>
+                                            <span class="residence-badge-small {{ scan[4] }}">
+                                                {{ 'Day Scholar' if scan[4] == 'day_scholar' else 'Hosteller' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ scan[5] }}</td>
+                                        <td>{{ scan[6].strftime('%I:%M %p') if scan[6] else '' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="no-scans">
+                                            <i class="fas fa-history"></i>
+                                            <p>No submitted scans for today</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" style="color: #f44336;"></i> Confirm Delete</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            
+            <div class="delete-confirm-content">
+                <p id="deleteConfirmMessage">Are you sure you want to delete this scan?</p>
+                <p class="delete-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</p>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-add modal-cancel">Cancel</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-add" style="background: #f44336;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/security.js') }}"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}

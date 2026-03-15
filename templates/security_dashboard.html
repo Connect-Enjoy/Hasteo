@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<body class="security-body">
+    <header class="security-header">
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
+                <div class="logo-text">Hasteo</div>
+            </a>
+            
+            <nav class="security-nav">
+                <a href="{{ url_for('security_dashboard') }}" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{{ url_for('security_bus_logs') }}">
+                    <i class="fas fa-bus"></i> Bus Logs
+                </a>
+                <a href="{{ url_for('security_student_logs') }}">
+                    <i class="fas fa-users"></i> Student Logs
+                </a>
+            </nav>
+            
+            <div class="security-user">
+                <i class="fas fa-shield-alt"></i>
+                <span>{{ session.get('security_name', 'Security') }}</span>
+                <a href="{{ url_for('security_logout') }}" id="logoutBtn" class="logout-link" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="security-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas 
+                                {% if category == 'success' %}fa-check-circle
+                                {% elif category == 'error' %}fa-exclamation-circle
+                                {% elif category == 'warning' %}fa-exclamation-triangle
+                                {% else %}fa-info-circle
+                                {% endif %}">
+                            </i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="security-page-header">
+            <h1>Security Dashboard</h1>
+            <p>Welcome back, {{ session.get('security_name', 'Security Officer') }}!</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-value">{{ now.strftime('%I:%M %p') }}</div>
+                <div class="stat-label">Current Time</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-day"></i>
+                <div class="stat-value">{{ now.strftime('%d %b, %Y') }}</div>
+                <div class="stat-label">Today's Date</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-hourglass-half"></i>
+                <div class="stat-value">{{ pending_bus_logs }}</div>
+                <div class="stat-label">Pending Bus Logs</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-qrcode"></i>
+                <div class="stat-value">{{ today_scans }}</div>
+                <div class="stat-label">Today's Scans</div>
+            </div>
+        </div>
+
+        <!-- Main Options -->
+        <div class="dashboard-grid">
+            <a href="{{ url_for('security_bus_logs') }}" class="dashboard-card">
+                <i class="fas fa-bus"></i>
+                <h3>Bus Logs</h3>
+                <p>Record bus entry and exit times. Track bus movements throughout the day.</p>
+                {% if pending_bus_logs > 0 %}
+                <span class="card-badge">{{ pending_bus_logs }} Pending</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('security_student_logs') }}" class="dashboard-card">
+                <i class="fas fa-users"></i>
+                <h3>Student Logs</h3>
+                <p>Scan student IDs, verify details, and record attendance for each bus.</p>
+                {% if today_scans > 0 %}
+                <span class="card-badge">{{ today_scans }} Scans Today</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <!-- Footer Note -->
+        <div class="footer-note">
+            <i class="fas fa-shield-alt"></i> Security personnel access only
+        </div>
+    </main>
+</body>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/security.js') }}"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}

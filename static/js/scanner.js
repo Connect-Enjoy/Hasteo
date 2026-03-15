@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Check if this ID has already been scanned
+        // Check if this ID has already been scanned in this session
         if (scannedIDs.has(studentID)) {
             showDuplicateWarning(studentID);
             return;
@@ -381,12 +381,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateResultsList();
         
-        // Send to backend
+        // Send to backend (will be overridden by security.js if on security page)
         sendToBackend(result);
     }
     
     function sendToBackend(result) {
-        // Implement backend API call here
+        // This will be overridden by security.js
         console.log('Student ID scanned:', result);
     }
     
@@ -439,23 +439,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateScanCount() {
-        scanCount.textContent = scanResults.length;
-        scanCount.style.animation = 'none';
-        setTimeout(() => {
-            scanCount.style.animation = 'pulse 0.5s';
-        }, 10);
+        if (scanCount) {
+            scanCount.textContent = scanResults.length;
+            scanCount.style.animation = 'none';
+            setTimeout(() => {
+                scanCount.style.animation = 'pulse 0.5s';
+            }, 10);
+        }
     }
     
     function updateLastScanTime() {
-        const now = new Date();
-        lastScanTime.innerHTML = `<i class="far fa-clock"></i> ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-        lastScanTime.style.animation = 'none';
-        setTimeout(() => {
-            lastScanTime.style.animation = 'pulse 0.5s';
-        }, 10);
+        if (lastScanTime) {
+            const now = new Date();
+            lastScanTime.innerHTML = `<i class="far fa-clock"></i> ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            lastScanTime.style.animation = 'none';
+            setTimeout(() => {
+                lastScanTime.style.animation = 'pulse 0.5s';
+            }, 10);
+        }
     }
     
     function updateStatus(message, type = 'info') {
+        if (!scannerStatus) return;
+        
         let icon = 'fa-info-circle';
         let color = '#ffffff';
         
@@ -593,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Clean up on page unload
     window.addEventListener('beforeunload', () => {
-        if (scanning) {
+        if (scanning && typeof Quagga !== 'undefined') {
             Quagga.stop();
             Quagga.offDetected(onDetected);
         }
@@ -601,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Retry function
     window.retryScanner = function() {
-        if (scanning) {
+        if (scanning && typeof Quagga !== 'undefined') {
             Quagga.stop();
             Quagga.offDetected(onDetected);
             scanning = false;

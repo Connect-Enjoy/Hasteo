@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Security Scanner - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="scanner-minimal">
+    <!-- Header with Bus Info -->
+    <div class="scanner-header-minimal">
+        <div class="container header-content-minimal">
+            <a href="{{ url_for('security_student_logs') }}" class="back-btn-minimal">
+                <i class="fas fa-arrow-left"></i> Back to Logs
+            </a>
+            <div class="scanner-title-minimal">Security Scanner</div>
+            <div class="header-spacer"></div>
+        </div>
+    </div>
+
+    <!-- Enhanced Bus Information -->
+    <div class="bus-info-bar">
+        <i class="fas fa-bus"></i>
+        <span>{{ bus[1] }} - {{ bus[2] }}</span>
+        <small><i class="fas fa-qrcode"></i> Scanning Mode</small>
+    </div>
+
+    <!-- Scanner Viewport -->
+    <div class="scanner-body">
+        <div class="scanner-viewport">
+            <!-- Camera Placeholder -->
+            <div class="camera-placeholder">
+                <i class="fas fa-camera"></i>
+                <p>Requesting camera access...<br><small>Please allow camera permission</small></p>
+            </div>
+            
+            <!-- Camera Wrapper -->
+            <div class="camera-wrapper" style="display: none;">
+                <div id="scannerContainer"></div>
+                <div class="scan-frame-overlay"></div>
+            </div>
+            
+            <!-- Scanner Status -->
+            <div class="scanner-status-minimal" id="scannerStatus">
+                <i class="fas fa-video"></i> <span>Initializing scanner...</span>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <div class="results-header">
+                <div class="results-title">
+                    <i class="fas fa-users"></i> Scanned Students
+                    <div class="scan-count" id="scanCount">0</div>
+                </div>
+                <div class="result-time-minimal" id="lastScanTime">
+                    <i class="far fa-clock"></i> --
+                </div>
+            </div>
+            
+            <div class="results-list" id="resultsList">
+                <div class="no-results">
+                    <i class="fas fa-qrcode"></i>
+                    <p>Align student ID card within the frame</p>
+                    <small class="no-results-hint">Hold steady for quick scan</small>
+                </div>
+            </div>
+            
+            <!-- Finish Scan Button -->
+            <div class="scanner-footer">
+                <a href="{{ url_for('security_student_logs') }}" class="finish-scan-btn">
+                    <i class="fas fa-check-circle"></i> Finish Scanning
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <p class="scanner-footer-note">
+                    <i class="fas fa-info-circle"></i> All scanned data will be saved automatically
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="busId" value="{{ bus[0] }}">
+<input type="hidden" id="busNumber" value="{{ bus[1] }}">
+{% endblock %}
+
+{% block scripts %}
+<!-- Load QuaggaJS for barcode scanning -->
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/security.js') }}"></script>
+{% endblock %}
