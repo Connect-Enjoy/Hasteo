@@ -1,7 +1,7 @@
 import os
 import pg8000
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from datetime import datetime
+from datetime import datetime, date
 import logging
 
 # Set up logging
@@ -90,7 +90,7 @@ def init_db():
                 )
             ''')
             
-            # Create buses table (simplified)
+            # Create buses table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS buses (
                     id SERIAL PRIMARY KEY,
@@ -104,17 +104,57 @@ def init_db():
                 )
             ''')
             
+            # Create bus_logs table for entry/exit times
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS bus_logs (
+                    id SERIAL PRIMARY KEY,
+                    bus_id INTEGER NOT NULL,
+                    bus_number VARCHAR(20) NOT NULL,
+                    security_id VARCHAR(20) NOT NULL,
+                    entry_time TIMESTAMP,
+                    exit_time TIMESTAMP,
+                    log_date DATE DEFAULT CURRENT_DATE,
+                    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
+                    FOREIGN KEY (bus_id) REFERENCES buses(id),
+                    FOREIGN KEY (security_id) REFERENCES security(security_id)
+                )
+            ''')
+            
             # Create scans table for attendance
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS scans (
                     id SERIAL PRIMARY KEY,
                     student_id VARCHAR(20) NOT NULL,
+                    student_name VARCHAR(100) NOT NULL,
+                    branch VARCHAR(50) NOT NULL,
+                    residence VARCHAR(20) NOT NULL,
                     scanned_by VARCHAR(20) NOT NULL,
-                    scan_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    bus_id INTEGER,
                     bus_number VARCHAR(20),
+                    scan_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    scan_date DATE DEFAULT CURRENT_DATE,
                     scan_type VARCHAR(20) DEFAULT 'check_in',
+                    session_id VARCHAR(50),
                     FOREIGN KEY (student_id) REFERENCES students(student_id),
-                    FOREIGN KEY (scanned_by) REFERENCES security(security_id)
+                    FOREIGN KEY (scanned_by) REFERENCES security(security_id),
+                    FOREIGN KEY (bus_id) REFERENCES buses(id)
+                )
+            ''')
+            
+            # Create temporary_scans table for current session
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS temp_scans (
+                    id SERIAL PRIMARY KEY,
+                    session_id VARCHAR(50) NOT NULL,
+                    student_id VARCHAR(20) NOT NULL,
+                    student_name VARCHAR(100) NOT NULL,
+                    branch VARCHAR(50) NOT NULL,
+                    residence VARCHAR(20) NOT NULL,
+                    bus_id INTEGER,
+                    bus_number VARCHAR(20),
+                    scan_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    scanned_by VARCHAR(20) NOT NULL,
+                    FOREIGN KEY (student_id) REFERENCES students(student_id)
                 )
             ''')
             
@@ -125,7 +165,9 @@ def init_db():
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_student_active ON students(is_active)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_security_active ON security(is_active)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_scans_student ON scans(student_id)')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_scans_time ON scans(scan_time)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_scans_date ON scans(scan_date)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_bus_logs_date ON bus_logs(log_date)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_temp_scans_session ON temp_scans(session_id)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_buses_status ON buses(status)')
             
             conn.commit()
@@ -149,6 +191,11 @@ except Exception as e:
 def index():
     return render_template('index.html')
 
+# Public Demo Scanner (No login required)
+@app.route('/scan')
+def scanner():
+    return render_template('scan.html')
+
 # Student Login
 @app.route('/student-login', methods=['GET', 'POST'])
 def student_login():
@@ -156,12 +203,34 @@ def student_login():
         student_id = request.form.get('student_id')
         password = request.form.get('password')
         
-        # TODO: Add actual authentication logic
-        session['user_type'] = 'student'
-        session['user_id'] = student_id
-        session['logged_in'] = True
-        flash('Student login successful!', 'success')
-        return redirect(url_for('index'))
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT student_id, name FROM students 
+                    WHERE student_id = %s AND password = %s AND is_active = TRUE
+                ''', (student_id, password))
+                
+                student = cursor.fetchone()
+                cursor.close()
+                
+                if student:
+                    session['user_type'] = 'student'
+                    session['user_id'] = student[0]
+                    session['student_name'] = student[1]
+                    session['logged_in'] = True
+                    flash(f'Welcome {student[1]}!', 'success')
+                    return redirect(url_for('index'))
+                else:
+                    flash('Invalid student ID or password', 'error')
+            except Exception as err:
+                print(f"Student login error: {err}")
+                flash('Login error. Please try again.', 'error')
+            finally:
+                conn.close()
+        else:
+            flash('Database connection error', 'error')
         
     return render_template('student_login.html')
 
@@ -172,14 +241,678 @@ def security_login():
         security_id = request.form.get('security_id')
         password = request.form.get('password')
         
-        # TODO: Add actual authentication logic
-        session['user_type'] = 'security'
-        session['user_id'] = security_id
-        session['logged_in'] = True
-        flash('Security login successful!', 'success')
-        return redirect(url_for('scanner'))
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT security_id, name FROM security 
+                    WHERE security_id = %s AND password = %s AND is_active = TRUE
+                ''', (security_id, password))
+                
+                security = cursor.fetchone()
+                cursor.close()
+                
+                if security:
+                    session['user_type'] = 'security'
+                    session['user_id'] = security[0]
+                    session['security_name'] = security[1]
+                    session['logged_in'] = True
+                    session['session_id'] = f"session_{datetime.now().strftime('%Y%m%d%H%M%S')}_{security_id}"
+                    flash(f'Welcome {security[1]}!', 'success')
+                    return redirect(url_for('security_dashboard'))
+                else:
+                    flash('Invalid security ID or password', 'error')
+            except Exception as err:
+                print(f"Security login error: {err}")
+                flash('Login error. Please try again.', 'error')
+            finally:
+                conn.close()
+        else:
+            flash('Database connection error', 'error')
         
     return render_template('security_login.html')
+
+# Security Dashboard
+@app.route('/security/dashboard')
+def security_dashboard():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        flash('Please login as security personnel.', 'warning')
+        return redirect(url_for('security_login'))
+    
+    conn = get_db_connection()
+    pending_bus_logs = 0
+    today_scans = 0
+    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Get pending bus logs count
+            cursor.execute('''
+                SELECT COUNT(*) FROM bus_logs 
+                WHERE security_id = %s AND status = 'pending' AND log_date = CURRENT_DATE
+            ''', (session.get('user_id'),))
+            pending_bus_logs = cursor.fetchone()[0]
+            
+            # Get today's scans count (from permanent scans)
+            cursor.execute('''
+                SELECT COUNT(*) FROM scans 
+                WHERE scanned_by = %s AND scan_date = CURRENT_DATE
+            ''', (session.get('user_id'),))
+            today_scans = cursor.fetchone()[0]
+            
+            cursor.close()
+            
+        except Exception as err:
+            print(f"Error loading dashboard data: {err}")
+        finally:
+            conn.close()
+    
+    return render_template('security_dashboard.html', 
+                         pending_bus_logs=pending_bus_logs,
+                         today_scans=today_scans,
+                         now=datetime.now())
+
+# Security Bus Logs
+@app.route('/security/bus-logs')
+def security_bus_logs():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return redirect(url_for('security_login'))
+    
+    conn = get_db_connection()
+    active_buses = []
+    today_logs = []
+    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Get all active buses
+            cursor.execute('''
+                SELECT id, bus_number, route_name, driver_name 
+                FROM buses 
+                WHERE status = 'active' 
+                ORDER BY bus_number
+            ''')
+            active_buses = cursor.fetchall()
+            
+            # Get today's bus logs
+            cursor.execute('''
+                SELECT id, bus_number, entry_time, exit_time, status 
+                FROM bus_logs 
+                WHERE security_id = %s AND log_date = CURRENT_DATE 
+                ORDER BY entry_time DESC
+            ''', (session.get('user_id'),))
+            today_logs = cursor.fetchall()
+            
+            cursor.close()
+            
+        except Exception as err:
+            print(f"Error loading bus data: {err}")
+            flash('Error loading bus data.', 'error')
+        finally:
+            conn.close()
+    
+    return render_template('security_bus.html', 
+                         active_buses=active_buses,
+                         today_logs=today_logs)
+
+# Record bus entry
+@app.route('/security/bus/entry/<int:bus_id>', methods=['POST'])
+def record_bus_entry(bus_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Get bus details
+            cursor.execute('SELECT bus_number FROM buses WHERE id = %s', (bus_id,))
+            bus = cursor.fetchone()
+            if not bus:
+                return jsonify({'success': False, 'error': 'Bus not found'}), 404
+            
+            bus_number = bus[0]
+            
+            # Check if there's already a pending log for this bus today
+            cursor.execute('''
+                SELECT id FROM bus_logs 
+                WHERE bus_id = %s AND log_date = CURRENT_DATE AND status = 'pending'
+            ''', (bus_id,))
+            
+            existing = cursor.fetchone()
+            if existing:
+                return jsonify({'success': False, 'error': 'Bus already has a pending log today'}), 400
+            
+            # Create new bus log
+            cursor.execute('''
+                INSERT INTO bus_logs (bus_id, bus_number, security_id, entry_time, status)
+                VALUES (%s, %s, %s, CURRENT_TIMESTAMP, 'pending')
+                RETURNING id
+            ''', (bus_id, bus_number, session.get('user_id')))
+            
+            log_id = cursor.fetchone()[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Entry recorded for bus {bus_number}',
+                'log_id': log_id,
+                'entry_time': datetime.now().strftime('%I:%M %p')
+            })
+            
+        except Exception as err:
+            print(f"Error recording bus entry: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Record bus exit
+@app.route('/security/bus/exit/<int:log_id>', methods=['POST'])
+def record_bus_exit(log_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Update bus log with exit time
+            cursor.execute('''
+                UPDATE bus_logs 
+                SET exit_time = CURRENT_TIMESTAMP
+                WHERE id = %s AND security_id = %s AND status = 'pending'
+                RETURNING bus_number
+            ''', (log_id, session.get('user_id')))
+            
+            result = cursor.fetchone()
+            if not result:
+                return jsonify({'success': False, 'error': 'Log not found or already completed'}), 404
+            
+            bus_number = result[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Exit recorded for bus {bus_number}',
+                'exit_time': datetime.now().strftime('%I:%M %p')
+            })
+            
+        except Exception as err:
+            print(f"Error recording bus exit: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Complete bus log (finalize)
+@app.route('/security/bus/complete/<int:log_id>', methods=['POST'])
+def complete_bus_log(log_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Check if both entry and exit exist
+            cursor.execute('''
+                UPDATE bus_logs 
+                SET status = 'completed'
+                WHERE id = %s AND security_id = %s AND entry_time IS NOT NULL 
+                AND exit_time IS NOT NULL AND status = 'pending'
+                RETURNING bus_number
+            ''', (log_id, session.get('user_id')))
+            
+            result = cursor.fetchone()
+            if not result:
+                return jsonify({'success': False, 'error': 'Log cannot be completed. Both entry and exit required.'}), 400
+            
+            bus_number = result[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Bus log for {bus_number} completed successfully'
+            })
+            
+        except Exception as err:
+            print(f"Error completing bus log: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Delete bus log (for accidental entries)
+@app.route('/security/bus/delete/<int:log_id>', methods=['POST'])
+def delete_bus_log(log_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Only allow deletion of pending logs
+            cursor.execute('''
+                DELETE FROM bus_logs 
+                WHERE id = %s AND security_id = %s AND status = 'pending'
+                RETURNING bus_number
+            ''', (log_id, session.get('user_id')))
+            
+            result = cursor.fetchone()
+            if not result:
+                return jsonify({'success': False, 'error': 'Log not found or cannot be deleted'}), 404
+            
+            bus_number = result[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Log for bus {bus_number} deleted successfully'
+            })
+            
+        except Exception as err:
+            print(f"Error deleting bus log: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Security Student Logs (Scanning page)
+@app.route('/security/student-logs')
+def security_student_logs():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return redirect(url_for('security_login'))
+    
+    conn = get_db_connection()
+    active_buses = []
+    current_session_scans = []
+    permanent_scans_today = []
+    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Get all active buses
+            cursor.execute('''
+                SELECT id, bus_number, route_name 
+                FROM buses 
+                WHERE status = 'active' 
+                ORDER BY bus_number
+            ''')
+            active_buses = cursor.fetchall()
+            
+            # Get current session scans
+            cursor.execute('''
+                SELECT id, student_id, student_name, branch, residence, bus_number, scan_time
+                FROM temp_scans 
+                WHERE session_id = %s
+                ORDER BY scan_time DESC
+            ''', (session.get('session_id'),))
+            current_session_scans = cursor.fetchall()
+            
+            # Get today's permanent scans
+            cursor.execute('''
+                SELECT id, student_id, student_name, branch, residence, bus_number, scan_time
+                FROM scans 
+                WHERE scanned_by = %s AND scan_date = CURRENT_DATE
+                ORDER BY scan_time DESC
+                LIMIT 20
+            ''', (session.get('user_id'),))
+            permanent_scans_today = cursor.fetchall()
+            
+            cursor.close()
+            
+        except Exception as err:
+            print(f"Error loading data: {err}")
+            flash('Error loading data.', 'error')
+        finally:
+            conn.close()
+    
+    return render_template('security_student.html', 
+                         active_buses=active_buses,
+                         current_scans=current_session_scans,
+                         permanent_scans=permanent_scans_today)
+
+# Security Scanner page (actual scanning interface)
+@app.route('/security/scan/<int:bus_id>')
+def security_scan(bus_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return redirect(url_for('security_login'))
+    
+    conn = get_db_connection()
+    bus = None
+    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, bus_number, route_name FROM buses WHERE id = %s', (bus_id,))
+            bus = cursor.fetchone()
+            cursor.close()
+            
+        except Exception as err:
+            print(f"Error loading bus: {err}")
+            flash('Error loading bus details.', 'error')
+        finally:
+            conn.close()
+    
+    if not bus:
+        flash('Bus not found', 'error')
+        return redirect(url_for('security_student_logs'))
+    
+    return render_template('security_scan.html', bus=bus)
+
+# API endpoint for security scanning
+@app.route('/api/security/scan', methods=['POST'])
+def api_security_scan():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    student_id = data.get('student_id')
+    bus_id = data.get('bus_id')
+    
+    if not student_id or not bus_id:
+        return jsonify({'success': False, 'error': 'Student ID and Bus ID required'}), 400
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Get bus details
+            cursor.execute('SELECT bus_number FROM buses WHERE id = %s', (bus_id,))
+            bus = cursor.fetchone()
+            if not bus:
+                return jsonify({'success': False, 'error': 'Bus not found'}), 404
+            bus_number = bus[0]
+            
+            # Verify student exists and is active - FETCH ALL DETAILS FROM DATABASE
+            cursor.execute('''
+                SELECT student_id, name, branch, residence, year_of_admission, registration_number 
+                FROM students 
+                WHERE student_id = %s AND is_active = TRUE
+            ''', (student_id,))
+            
+            student = cursor.fetchone()
+            if not student:
+                return jsonify({'success': False, 'error': 'Student not found or inactive'}), 404
+            
+            student_id_db = student[0]
+            student_name = student[1]
+            branch = student[2]
+            residence = student[3]
+            year = student[4]
+            reg_number = student[5]
+            
+            # Check if already scanned in this session
+            cursor.execute('''
+                SELECT id FROM temp_scans 
+                WHERE session_id = %s AND student_id = %s
+            ''', (session.get('session_id'), student_id))
+            
+            if cursor.fetchone():
+                return jsonify({
+                    'success': False, 
+                    'error': 'Student already scanned in this session',
+                    'student_name': student_name
+                }), 400
+            
+            # Save to temp scans
+            cursor.execute('''
+                INSERT INTO temp_scans 
+                (session_id, student_id, student_name, branch, residence, bus_id, bus_number, scanned_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            ''', (session.get('session_id'), student_id, student_name, branch, 
+                  residence, bus_id, bus_number, session.get('user_id')))
+            
+            scan_id = cursor.fetchone()[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Student {student_name} scanned successfully',
+                'student': {
+                    'id': student_id,
+                    'name': student_name,
+                    'branch': branch,
+                    'residence': residence,
+                    'bus': bus_number,
+                    'scan_id': scan_id,
+                    'time': datetime.now().strftime('%I:%M %p'),
+                    'year': year,
+                    'reg_number': reg_number
+                }
+            })
+            
+        except Exception as err:
+            print(f"Error saving scan: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Get current session scans
+@app.route('/api/security/current-scans', methods=['GET'])
+def get_current_scans():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT id, student_id, student_name, branch, residence, bus_number, scan_time
+                FROM temp_scans 
+                WHERE session_id = %s
+                ORDER BY scan_time DESC
+            ''', (session.get('session_id'),))
+            
+            scans = cursor.fetchall()
+            cursor.close()
+            
+            scans_list = []
+            for scan in scans:
+                scans_list.append({
+                    'id': scan[0],
+                    'student_id': scan[1],
+                    'student_name': scan[2],
+                    'branch': scan[3],
+                    'residence': scan[4],
+                    'bus_number': scan[5],
+                    'scan_time': scan[6].strftime('%I:%M %p')
+                })
+            
+            return jsonify({'success': True, 'scans': scans_list})
+            
+        except Exception as err:
+            print(f"Error getting scans: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Delete scan from current session (for accidental scans)
+@app.route('/api/security/delete-scan/<int:scan_id>', methods=['POST'])
+def delete_temp_scan(scan_id):
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                DELETE FROM temp_scans 
+                WHERE id = %s AND session_id = %s
+                RETURNING student_name
+            ''', (scan_id, session.get('session_id')))
+            
+            result = cursor.fetchone()
+            if not result:
+                return jsonify({'success': False, 'error': 'Scan not found'}), 404
+            
+            student_name = result[0]
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Scan for {student_name} deleted'
+            })
+            
+        except Exception as err:
+            print(f"Error deleting scan: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Clear current session (when starting fresh)
+@app.route('/api/security/clear-session', methods=['POST'])
+def clear_session():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                DELETE FROM temp_scans 
+                WHERE session_id = %s
+            ''', (session.get('session_id'),))
+            
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({'success': True, 'message': 'Session cleared'})
+            
+        except Exception as err:
+            print(f"Error clearing session: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Submit all scans to permanent database
+@app.route('/api/security/submit-scans', methods=['POST'])
+def submit_scans():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # First check if there are any scans to submit
+            cursor.execute('''
+                SELECT COUNT(*) FROM temp_scans WHERE session_id = %s
+            ''', (session.get('session_id'),))
+            count = cursor.fetchone()[0]
+            
+            if count == 0:
+                return jsonify({'success': False, 'error': 'No scans to submit'}), 400
+            
+            # Move all temp scans to permanent scans table
+            cursor.execute('''
+                INSERT INTO scans 
+                (student_id, student_name, branch, residence, scanned_by, bus_id, bus_number, scan_time, scan_date, session_id)
+                SELECT student_id, student_name, branch, residence, scanned_by, bus_id, bus_number, scan_time, CURRENT_DATE, session_id
+                FROM temp_scans
+                WHERE session_id = %s
+            ''', (session.get('session_id'),))
+            
+            # Clear temp scans after successful insertion
+            cursor.execute('DELETE FROM temp_scans WHERE session_id = %s', (session.get('session_id'),))
+            
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'{count} scans submitted successfully',
+                'count': count
+            })
+            
+        except Exception as err:
+            print(f"Error submitting scans: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Get today's permanent scans
+@app.route('/api/security/today-scans', methods=['GET'])
+def get_today_scans():
+    if not session.get('logged_in') or session.get('user_type') != 'security':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT id, student_id, student_name, branch, residence, bus_number, scan_time
+                FROM scans 
+                WHERE scanned_by = %s AND scan_date = CURRENT_DATE
+                ORDER BY scan_time DESC
+                LIMIT 50
+            ''', (session.get('user_id'),))
+            
+            scans = cursor.fetchall()
+            cursor.close()
+            
+            scans_list = []
+            for scan in scans:
+                scans_list.append({
+                    'id': scan[0],
+                    'student_id': scan[1],
+                    'student_name': scan[2],
+                    'branch': scan[3],
+                    'residence': scan[4],
+                    'bus_number': scan[5],
+                    'scan_time': scan[6].strftime('%I:%M %p')
+                })
+            
+            return jsonify({'success': True, 'scans': scans_list})
+            
+        except Exception as err:
+            print(f"Error getting today's scans: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Admin Login
 @app.route('/admin-login', methods=['GET', 'POST'])
@@ -205,22 +938,17 @@ def developer_login():
         developer_id = request.form.get('developer_id')
         password = request.form.get('password')
         
-        # TODO: Add actual developer authentication logic
-        session['user_type'] = 'developer'
-        session['user_id'] = developer_id
-        session['logged_in'] = True
-        flash('Developer login successful!', 'success')
-        return redirect(url_for('index'))
+        # Simple check for demo
+        if developer_id == 'dev' and password == 'dev123':
+            session['user_type'] = 'developer'
+            session['user_id'] = developer_id
+            session['logged_in'] = True
+            flash('Developer login successful!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid developer credentials', 'error')
         
     return render_template('developer_login.html')
-
-# Scanner Page
-@app.route('/scan')
-def scanner():
-    if not session.get('logged_in') or session.get('user_type') not in ['security', 'admin']:
-        flash('Please login as security personnel to access scanner.', 'warning')
-        return redirect(url_for('security_login'))
-    return render_template('scan.html')
 
 # Admin Dashboard
 @app.route('/admin')
@@ -524,7 +1252,7 @@ def admin_update_student(student_id):
     
     return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
-# Delete Student
+# Delete Student (soft delete)
 @app.route('/admin/delete-student/<int:student_id>', methods=['POST'])
 def admin_delete_student(student_id):
     if not session.get('admin_logged_in'):
@@ -534,11 +1262,22 @@ def admin_delete_student(student_id):
     if conn:
         try:
             cursor = conn.cursor()
+            
+            # First get student name for message
+            cursor.execute('SELECT name FROM students WHERE id = %s', (student_id,))
+            student = cursor.fetchone()
+            
+            if not student:
+                return jsonify({'success': False, 'error': 'Student not found'}), 404
+            
+            student_name = student[0]
+            
+            # Soft delete
             cursor.execute('UPDATE students SET is_active = FALSE WHERE id = %s', (student_id,))
             conn.commit()
             cursor.close()
             
-            return jsonify({'success': True, 'message': 'Student deleted successfully'})
+            return jsonify({'success': True, 'message': f'Student {student_name} deleted successfully'})
             
         except Exception as err:
             print(f"Error deleting student: {err}")
@@ -595,7 +1334,7 @@ def admin_add_security():
     
     return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
-# Delete Security
+# Delete Security (soft delete)
 @app.route('/admin/delete-security/<int:security_id>', methods=['POST'])
 def admin_delete_security(security_id):
     if not session.get('admin_logged_in'):
@@ -605,11 +1344,22 @@ def admin_delete_security(security_id):
     if conn:
         try:
             cursor = conn.cursor()
+            
+            # First get security name for message
+            cursor.execute('SELECT name FROM security WHERE id = %s', (security_id,))
+            security = cursor.fetchone()
+            
+            if not security:
+                return jsonify({'success': False, 'error': 'Security personnel not found'}), 404
+            
+            security_name = security[0]
+            
+            # Soft delete
             cursor.execute('UPDATE security SET is_active = FALSE WHERE id = %s', (security_id,))
             conn.commit()
             cursor.close()
             
-            return jsonify({'success': True, 'message': 'Security personnel deleted successfully'})
+            return jsonify({'success': True, 'message': f'Security personnel {security_name} deleted successfully'})
             
         except Exception as err:
             print(f"Error deleting security: {err}")
@@ -871,11 +1621,22 @@ def admin_delete_bus(bus_id):
     if conn:
         try:
             cursor = conn.cursor()
+            
+            # First get bus number for message
+            cursor.execute('SELECT bus_number FROM buses WHERE id = %s', (bus_id,))
+            bus = cursor.fetchone()
+            
+            if not bus:
+                return jsonify({'success': False, 'error': 'Bus not found'}), 404
+            
+            bus_number = bus[0]
+            
+            # Delete bus
             cursor.execute('DELETE FROM buses WHERE id = %s', (bus_id,))
             conn.commit()
             cursor.close()
             
-            return jsonify({'success': True, 'message': 'Bus deleted successfully'})
+            return jsonify({'success': True, 'message': f'Bus {bus_number} deleted successfully'})
             
         except Exception as err:
             print(f"Error deleting bus: {err}")
@@ -885,6 +1646,27 @@ def admin_delete_bus(bus_id):
     
     return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
+# Security Logout
+@app.route('/security/logout')
+def security_logout():
+    # Clear temp scans on logout
+    if session.get('session_id'):
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM temp_scans WHERE session_id = %s', (session.get('session_id'),))
+                conn.commit()
+                cursor.close()
+            except Exception as err:
+                print(f"Error clearing temp scans: {err}")
+            finally:
+                conn.close()
+    
+    session.clear()
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('index'))
+
 # Admin Logout
 @app.route('/admin/logout')
 def admin_logout():
@@ -893,67 +1675,12 @@ def admin_logout():
     flash('Admin logged out successfully!', 'success')
     return redirect(url_for('index'))
 
-# Logout
+# General Logout
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Logged out successfully!', 'success')
     return redirect(url_for('index'))
-
-# API Routes
-@app.route('/api/scan', methods=['POST'])
-def api_scan():
-    """API endpoint for barcode scanning"""
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    data = request.json
-    student_id = data.get('student_id')
-    bus_number = data.get('bus_number', '')
-    scan_type = data.get('scan_type', 'check_in')
-    
-    if not student_id:
-        return jsonify({'error': 'Student ID required'}), 400
-    
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            
-            # Verify student exists and is active
-            cursor.execute('''
-                SELECT student_id, name FROM students 
-                WHERE student_id = %s AND is_active = TRUE
-            ''', (student_id,))
-            
-            student = cursor.fetchone()
-            if not student:
-                return jsonify({'error': 'Student not found or inactive'}), 404
-            
-            # Save scan
-            cursor.execute('''
-                INSERT INTO scans (student_id, scanned_by, bus_number, scan_type)
-                VALUES (%s, %s, %s, %s)
-            ''', (student_id, session.get('user_id', 'unknown'), bus_number, scan_type))
-            
-            conn.commit()
-            cursor.close()
-            
-            return jsonify({
-                'success': True,
-                'student_id': student_id,
-                'student_name': student[1],
-                'timestamp': datetime.now().isoformat(),
-                'scanned_by': session.get('user_id')
-            })
-            
-        except Exception as err:
-            print(f"Error saving scan: {err}")
-            return jsonify({'error': 'Database error'}), 500
-        finally:
-            conn.close()
-    
-    return jsonify({'error': 'Database connection failed'}), 500
 
 # Vercel requirement
 application = app
