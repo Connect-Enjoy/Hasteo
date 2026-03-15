@@ -60,7 +60,7 @@ def init_db():
         try:
             cursor = conn.cursor()
             
-            # Create students table
+            # Create students table with residence field
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS students (
                     id SERIAL PRIMARY KEY,
@@ -71,6 +71,7 @@ def init_db():
                     registration_number VARCHAR(20) UNIQUE NOT NULL,
                     email VARCHAR(100) NOT NULL,
                     password VARCHAR(100) NOT NULL,
+                    residence VARCHAR(20) DEFAULT 'day_scholar',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     is_active BOOLEAN DEFAULT TRUE
                 )
@@ -89,20 +90,17 @@ def init_db():
                 )
             ''')
             
-            # Create buses table (no sample data)
+            # Create buses table (simplified)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS buses (
                     id SERIAL PRIMARY KEY,
                     bus_number VARCHAR(20) UNIQUE NOT NULL,
                     route_name VARCHAR(100) NOT NULL,
-                    capacity INTEGER NOT NULL CHECK (capacity > 0),
                     driver_name VARCHAR(100) NOT NULL,
                     driver_phone VARCHAR(20) NOT NULL,
-                    driver_license VARCHAR(50),
                     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'maintenance', 'inactive')),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    notes TEXT
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
@@ -123,6 +121,7 @@ def init_db():
             # Create indexes
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_student_branch ON students(branch)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_student_year ON students(year_of_admission)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_student_residence ON students(residence)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_student_active ON students(is_active)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_security_active ON security(is_active)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_scans_student ON scans(student_id)')
@@ -287,6 +286,8 @@ def admin_users():
     conn = get_db_connection()
     students = []
     security_personnel = []
+    eligible_batches = {}
+    current_year = datetime.now().year
     stats = {
         'total_students': 0,
         'total_security': 0,
@@ -298,10 +299,10 @@ def admin_users():
         try:
             cursor = conn.cursor()
             
-            # Get all active students
+            # Get all active students with residence
             cursor.execute('''
-                SELECT student_id, name, branch, year_of_admission, 
-                       registration_number, email, created_at
+                SELECT id, student_id, name, branch, year_of_admission, 
+                       registration_number, email, residence
                 FROM students 
                 WHERE is_active = TRUE 
                 ORDER BY year_of_admission DESC, branch, name
@@ -310,7 +311,7 @@ def admin_users():
             
             # Get all active security personnel
             cursor.execute('''
-                SELECT security_id, name, email, created_at
+                SELECT id, security_id, name, email
                 FROM security 
                 WHERE is_active = TRUE 
                 ORDER BY name
@@ -335,7 +336,7 @@ def admin_users():
             for branch, count in cursor.fetchall():
                 stats['students_by_branch'][branch] = count
             
-            # Students by year
+            # Students by year and calculate eligible batches
             cursor.execute('''
                 SELECT year_of_admission, COUNT(*) 
                 FROM students 
@@ -345,6 +346,9 @@ def admin_users():
             ''')
             for year, count in cursor.fetchall():
                 stats['students_by_year'][year] = count
+                # Calculate eligible batches (4+ years old)
+                if current_year - year >= 4:
+                    eligible_batches[year] = count
             
             cursor.close()
             
@@ -354,13 +358,18 @@ def admin_users():
         finally:
             conn.close()
     
-    return render_template('admin_users.html', students=students, security=security_personnel, stats=stats)
+    return render_template('admin_users.html', 
+                         students=students, 
+                         security=security_personnel, 
+                         stats=stats,
+                         eligible_batches=eligible_batches,
+                         now=datetime.now())
 
 # Add Student
-@app.route('/admin/users/add-student', methods=['POST'])
+@app.route('/admin/add-student', methods=['POST'])
 def admin_add_student():
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     name = request.form.get('name')
     branch = request.form.get('branch')
@@ -369,10 +378,10 @@ def admin_add_student():
     registration_number = request.form.get('registration_number')
     email = request.form.get('email')
     password = request.form.get('password')
+    residence = request.form.get('residence', 'day_scholar')
     
-    if not all([name, branch, year_of_admission, student_id, registration_number, email, password]):
-        flash('All fields are required!', 'error')
-        return redirect(url_for('admin_users'))
+    if not all([name, branch, year_of_admission, student_id, registration_number, email, password, residence]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
     
     conn = get_db_connection()
     if conn:
@@ -385,36 +394,165 @@ def admin_add_student():
             ''', (student_id, registration_number))
             
             if cursor.fetchone():
-                flash('Student ID or Registration Number already exists!', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('admin_users'))
+                return jsonify({'success': False, 'error': 'Student ID or Registration Number already exists'}), 400
             
             cursor.execute('''
                 INSERT INTO students (student_id, name, branch, year_of_admission, 
-                                     registration_number, email, password)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                     registration_number, email, password, residence)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
             ''', (student_id, name, branch, int(year_of_admission), 
-                  registration_number, email, password))
+                  registration_number, email, password, residence))
             
+            new_id = cursor.fetchone()[0]
             conn.commit()
             cursor.close()
-            flash(f'Student {name} added successfully!', 'success')
+            
+            return jsonify({
+                'success': True, 
+                'message': f'Student {name} added successfully',
+                'id': new_id
+            })
             
         except Exception as err:
             print(f"Error adding student: {err}")
-            flash('Error adding student. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_users'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Get Student Details for Edit
+@app.route('/admin/get-student/<int:student_id>', methods=['GET'])
+def admin_get_student(student_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, student_id, name, branch, year_of_admission, 
+                       registration_number, email, residence
+                FROM students 
+                WHERE id = %s AND is_active = TRUE
+            ''', (student_id,))
+            
+            student = cursor.fetchone()
+            cursor.close()
+            
+            if student:
+                return jsonify({
+                    'success': True,
+                    'student': {
+                        'id': student[0],
+                        'student_id': student[1],
+                        'name': student[2],
+                        'branch': student[3],
+                        'year': student[4],
+                        'registration_number': student[5],
+                        'email': student[6],
+                        'residence': student[7]
+                    }
+                })
+            else:
+                return jsonify({'success': False, 'error': 'Student not found'}), 404
+                
+        except Exception as err:
+            print(f"Error getting student: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Update Student
+@app.route('/admin/update-student/<int:student_id>', methods=['POST'])
+def admin_update_student(student_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    name = request.form.get('name')
+    branch = request.form.get('branch')
+    year_of_admission = request.form.get('year_of_admission')
+    registration_number = request.form.get('registration_number')
+    email = request.form.get('email')
+    residence = request.form.get('residence', 'day_scholar')
+    
+    if not all([name, branch, year_of_admission, registration_number, email, residence]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            
+            # Check if registration number already exists for another student
+            cursor.execute('''
+                SELECT id FROM students 
+                WHERE registration_number = %s AND id != %s
+            ''', (registration_number, student_id))
+            
+            if cursor.fetchone():
+                return jsonify({'success': False, 'error': 'Registration number already exists for another student'}), 400
+            
+            cursor.execute('''
+                UPDATE students SET 
+                    name = %s,
+                    branch = %s,
+                    year_of_admission = %s,
+                    registration_number = %s,
+                    email = %s,
+                    residence = %s
+                WHERE id = %s
+            ''', (name, branch, int(year_of_admission), registration_number, email, residence, student_id))
+            
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Student {name} updated successfully'
+            })
+            
+        except Exception as err:
+            print(f"Error updating student: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Delete Student
+@app.route('/admin/delete-student/<int:student_id>', methods=['POST'])
+def admin_delete_student(student_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE students SET is_active = FALSE WHERE id = %s', (student_id,))
+            conn.commit()
+            cursor.close()
+            
+            return jsonify({'success': True, 'message': 'Student deleted successfully'})
+            
+        except Exception as err:
+            print(f"Error deleting student: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Add Security
-@app.route('/admin/users/add-security', methods=['POST'])
+@app.route('/admin/add-security', methods=['POST'])
 def admin_add_security():
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     security_id = request.form.get('security_id')
     name = request.form.get('name')
@@ -422,109 +560,85 @@ def admin_add_security():
     password = request.form.get('password')
     
     if not all([security_id, name, email, password]):
-        flash('All fields are required!', 'error')
-        return redirect(url_for('admin_users'))
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
     
     conn = get_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             
-            cursor.execute('SELECT security_id FROM security WHERE security_id = %s', (security_id,))
+            cursor.execute('SELECT id FROM security WHERE security_id = %s', (security_id,))
             if cursor.fetchone():
-                flash('Security ID already exists!', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('admin_users'))
+                return jsonify({'success': False, 'error': 'Security ID already exists'}), 400
             
             cursor.execute('''
                 INSERT INTO security (security_id, name, email, password)
                 VALUES (%s, %s, %s, %s)
+                RETURNING id
             ''', (security_id, name, email, password))
             
+            new_id = cursor.fetchone()[0]
             conn.commit()
             cursor.close()
-            flash(f'Security personnel {name} added successfully!', 'success')
+            
+            return jsonify({
+                'success': True,
+                'message': f'Security personnel {name} added successfully',
+                'id': new_id
+            })
             
         except Exception as err:
             print(f"Error adding security: {err}")
-            flash('Error adding security personnel. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_users'))
-
-# Delete Student
-@app.route('/admin/users/delete-student/<student_id>', methods=['POST'])
-def admin_delete_student(student_id):
-    if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
-    
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute('UPDATE students SET is_active = FALSE WHERE student_id = %s', (student_id,))
-            conn.commit()
-            cursor.close()
-            flash('Student deactivated successfully!', 'success')
-            
-        except Exception as err:
-            print(f"Error deleting student: {err}")
-            flash('Error deleting student.', 'error')
-            conn.rollback()
-        finally:
-            conn.close()
-    
-    return redirect(url_for('admin_users'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Delete Security
-@app.route('/admin/users/delete-security/<security_id>', methods=['POST'])
+@app.route('/admin/delete-security/<int:security_id>', methods=['POST'])
 def admin_delete_security(security_id):
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     conn = get_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute('UPDATE security SET is_active = FALSE WHERE security_id = %s', (security_id,))
+            cursor.execute('UPDATE security SET is_active = FALSE WHERE id = %s', (security_id,))
             conn.commit()
             cursor.close()
-            flash('Security personnel deactivated successfully!', 'success')
+            
+            return jsonify({'success': True, 'message': 'Security personnel deleted successfully'})
             
         except Exception as err:
             print(f"Error deleting security: {err}")
-            flash('Error deleting security personnel.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_users'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Delete Students by Year
-@app.route('/admin/users/delete-students-by-year', methods=['POST'])
+@app.route('/admin/delete-students-by-year', methods=['POST'])
 def admin_delete_students_by_year():
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
-    year = request.form.get('year')
+    data = request.get_json()
+    year = data.get('year')
     current_year = datetime.now().year
     
     if not year:
-        flash('Please select a year!', 'error')
-        return redirect(url_for('admin_users'))
+        return jsonify({'success': False, 'error': 'Year is required'}), 400
     
     try:
         year = int(year)
     except ValueError:
-        flash('Invalid year format!', 'error')
-        return redirect(url_for('admin_users'))
+        return jsonify({'success': False, 'error': 'Invalid year format'}), 400
     
     if current_year - year < 4:
-        flash('Can only delete students from batches 4 or more years old!', 'error')
-        return redirect(url_for('admin_users'))
+        return jsonify({'success': False, 'error': 'Can only delete students from batches 4 or more years old'}), 400
     
     conn = get_db_connection()
     if conn:
@@ -544,16 +658,20 @@ def admin_delete_students_by_year():
             
             conn.commit()
             cursor.close()
-            flash(f'{count} students from batch {year} have been deactivated!', 'success')
+            
+            return jsonify({
+                'success': True,
+                'message': f'{count} students from batch {year} have been deactivated',
+                'count': count
+            })
             
         except Exception as err:
             print(f"Error deleting students by year: {err}")
-            flash('Error deleting students. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_users'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Admin Bus Management
 @app.route('/admin/buses')
@@ -565,20 +683,17 @@ def admin_buses():
     buses = []
     stats = {
         'total_buses': 0,
-        'active_buses': 0,
-        'maintenance_buses': 0,
-        'inactive_buses': 0,
-        'total_capacity': 0
+        'active_buses': 0
     }
     
     if conn:
         try:
             cursor = conn.cursor()
             
-            # Get all buses
+            # Get all buses with simplified fields
             cursor.execute('''
-                SELECT id, bus_number, route_name, capacity, driver_name, 
-                       driver_phone, driver_license, status, created_at, notes
+                SELECT id, bus_number, route_name, driver_name, 
+                       driver_phone, status
                 FROM buses 
                 ORDER BY status, bus_number
             ''')
@@ -591,15 +706,6 @@ def admin_buses():
             cursor.execute("SELECT COUNT(*) FROM buses WHERE status = 'active'")
             stats['active_buses'] = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM buses WHERE status = 'maintenance'")
-            stats['maintenance_buses'] = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT COUNT(*) FROM buses WHERE status = 'inactive'")
-            stats['inactive_buses'] = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT COALESCE(SUM(capacity), 0) FROM buses WHERE status = 'active'")
-            stats['total_capacity'] = cursor.fetchone()[0]
-            
             cursor.close()
             
         except Exception as err:
@@ -611,32 +717,19 @@ def admin_buses():
     return render_template('admin_buses.html', buses=buses, stats=stats)
 
 # Add Bus
-@app.route('/admin/buses/add', methods=['POST'])
+@app.route('/admin/add-bus', methods=['POST'])
 def admin_add_bus():
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     bus_number = request.form.get('bus_number')
     route_name = request.form.get('route_name')
-    capacity = request.form.get('capacity')
     driver_name = request.form.get('driver_name')
     driver_phone = request.form.get('driver_phone')
-    driver_license = request.form.get('driver_license')
     status = request.form.get('status', 'active')
-    notes = request.form.get('notes')
     
-    if not all([bus_number, route_name, capacity, driver_name, driver_phone]):
-        flash('Bus Number, Route, Capacity, Driver Name, and Driver Phone are required!', 'error')
-        return redirect(url_for('admin_buses'))
-    
-    try:
-        capacity = int(capacity)
-        if capacity <= 0:
-            flash('Capacity must be a positive number!', 'error')
-            return redirect(url_for('admin_buses'))
-    except ValueError:
-        flash('Capacity must be a valid number!', 'error')
-        return redirect(url_for('admin_buses'))
+    if not all([bus_number, route_name, driver_name, driver_phone]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
     
     conn = get_db_connection()
     if conn:
@@ -644,60 +737,90 @@ def admin_add_bus():
             cursor = conn.cursor()
             
             # Check if bus number already exists
-            cursor.execute('SELECT bus_number FROM buses WHERE bus_number = %s', (bus_number,))
+            cursor.execute('SELECT id FROM buses WHERE bus_number = %s', (bus_number,))
             if cursor.fetchone():
-                flash(f'Bus number {bus_number} already exists!', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('admin_buses'))
+                return jsonify({'success': False, 'error': f'Bus number {bus_number} already exists'}), 400
             
             cursor.execute('''
-                INSERT INTO buses (bus_number, route_name, capacity, driver_name, 
-                                 driver_phone, driver_license, status, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (bus_number, route_name, capacity, driver_name, 
-                  driver_phone, driver_license, status, notes))
+                INSERT INTO buses (bus_number, route_name, driver_name, driver_phone, status)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            ''', (bus_number, route_name, driver_name, driver_phone, status))
             
+            new_id = cursor.fetchone()[0]
             conn.commit()
             cursor.close()
-            flash(f'Bus {bus_number} added successfully!', 'success')
+            
+            return jsonify({
+                'success': True,
+                'message': f'Bus {bus_number} added successfully',
+                'id': new_id
+            })
             
         except Exception as err:
             print(f"Error adding bus: {err}")
-            flash('Error adding bus. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_buses'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+# Get Bus Details for Edit
+@app.route('/admin/get-bus/<int:bus_id>', methods=['GET'])
+def admin_get_bus(bus_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, bus_number, route_name, driver_name, driver_phone, status
+                FROM buses 
+                WHERE id = %s
+            ''', (bus_id,))
+            
+            bus = cursor.fetchone()
+            cursor.close()
+            
+            if bus:
+                return jsonify({
+                    'success': True,
+                    'bus': {
+                        'id': bus[0],
+                        'bus_number': bus[1],
+                        'route_name': bus[2],
+                        'driver_name': bus[3],
+                        'driver_phone': bus[4],
+                        'status': bus[5]
+                    }
+                })
+            else:
+                return jsonify({'success': False, 'error': 'Bus not found'}), 404
+                
+        except Exception as err:
+            print(f"Error getting bus: {err}")
+            return jsonify({'success': False, 'error': 'Database error'}), 500
+        finally:
+            conn.close()
+    
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Update Bus
-@app.route('/admin/buses/update/<int:bus_id>', methods=['POST'])
+@app.route('/admin/update-bus/<int:bus_id>', methods=['POST'])
 def admin_update_bus(bus_id):
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     bus_number = request.form.get('bus_number')
     route_name = request.form.get('route_name')
-    capacity = request.form.get('capacity')
     driver_name = request.form.get('driver_name')
     driver_phone = request.form.get('driver_phone')
-    driver_license = request.form.get('driver_license')
     status = request.form.get('status')
-    notes = request.form.get('notes')
     
-    if not all([bus_number, route_name, capacity, driver_name, driver_phone]):
-        flash('All required fields must be filled!', 'error')
-        return redirect(url_for('admin_buses'))
-    
-    try:
-        capacity = int(capacity)
-        if capacity <= 0:
-            flash('Capacity must be a positive number!', 'error')
-            return redirect(url_for('admin_buses'))
-    except ValueError:
-        flash('Capacity must be a valid number!', 'error')
-        return redirect(url_for('admin_buses'))
+    if not all([bus_number, route_name, driver_name, driver_phone]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
     
     conn = get_db_connection()
     if conn:
@@ -709,44 +832,40 @@ def admin_update_bus(bus_id):
                 SELECT id FROM buses WHERE bus_number = %s AND id != %s
             ''', (bus_number, bus_id))
             if cursor.fetchone():
-                flash(f'Bus number {bus_number} already exists for another bus!', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('admin_buses'))
+                return jsonify({'success': False, 'error': f'Bus number {bus_number} already exists for another bus'}), 400
             
             cursor.execute('''
                 UPDATE buses SET 
                     bus_number = %s,
                     route_name = %s,
-                    capacity = %s,
                     driver_name = %s,
                     driver_phone = %s,
-                    driver_license = %s,
                     status = %s,
-                    notes = %s,
                     last_updated = CURRENT_TIMESTAMP
                 WHERE id = %s
-            ''', (bus_number, route_name, capacity, driver_name, 
-                  driver_phone, driver_license, status, notes, bus_id))
+            ''', (bus_number, route_name, driver_name, driver_phone, status, bus_id))
             
             conn.commit()
             cursor.close()
-            flash(f'Bus {bus_number} updated successfully!', 'success')
+            
+            return jsonify({
+                'success': True,
+                'message': f'Bus {bus_number} updated successfully'
+            })
             
         except Exception as err:
             print(f"Error updating bus: {err}")
-            flash('Error updating bus. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_buses'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Delete Bus
-@app.route('/admin/buses/delete/<int:bus_id>', methods=['POST'])
+@app.route('/admin/delete-bus/<int:bus_id>', methods=['POST'])
 def admin_delete_bus(bus_id):
     if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
     conn = get_db_connection()
     if conn:
@@ -755,16 +874,16 @@ def admin_delete_bus(bus_id):
             cursor.execute('DELETE FROM buses WHERE id = %s', (bus_id,))
             conn.commit()
             cursor.close()
-            flash('Bus deleted successfully!', 'success')
+            
+            return jsonify({'success': True, 'message': 'Bus deleted successfully'})
             
         except Exception as err:
             print(f"Error deleting bus: {err}")
-            flash('Error deleting bus. Please try again.', 'error')
-            conn.rollback()
+            return jsonify({'success': False, 'error': 'Database error'}), 500
         finally:
             conn.close()
     
-    return redirect(url_for('admin_buses'))
+    return jsonify({'success': False, 'error': 'Database connection failed'}), 500
 
 # Admin Logout
 @app.route('/admin/logout')
