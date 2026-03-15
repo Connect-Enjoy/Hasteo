@@ -26,9 +26,6 @@
                 <a href="{{ url_for('admin_buses') }}">
                     <i class="fas fa-bus"></i> Manage Buses
                 </a>
-                <a href="#" onclick="handleCardClick('Daily Report')">
-                    <i class="fas fa-chart-line"></i> Daily Report
-                </a>
             </nav>
             
             <div class="admin-user">
@@ -63,10 +60,10 @@
 
         <div class="admin-page-header">
             <h1>Admin Dashboard</h1>
-            <p>Manage your college bus attendance system</p>
+            <p>Quick overview and management</p>
         </div>
 
-        <!-- Dashboard Stats Cards -->
+        <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
                 <i class="fas fa-user-graduate"></i>
@@ -90,72 +87,50 @@
             </div>
         </div>
 
-        <!-- Quick Access Cards -->
-        <div class="admin-dashboard-grid">
-            <!-- Manage Users Card -->
-            <a href="{{ url_for('admin_users') }}" class="admin-dashboard-card">
-                <i class="fas fa-users-cog"></i>
-                <h3>Manage Users</h3>
-                <p>Add, edit, or remove students and security personnel. Manage user accounts and permissions.</p>
-                <div class="card-footer">
-                    <span>Manage Users</span>
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- Manage Buses Card -->
-            <a href="{{ url_for('admin_buses') }}" class="admin-dashboard-card">
-                <i class="fas fa-bus"></i>
-                <h3>Manage Buses</h3>
-                <p>Add and manage bus details, routes, drivers, and bus status. Track bus fleet information.</p>
-                <div class="card-footer">
+        <!-- Quick Action Buttons -->
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('admin_users') }}#students" class="action-btn">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Manage Students</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}#security" class="action-btn">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Manage Security</span>
+                </a>
+                <a href="{{ url_for('admin_buses') }}" class="action-btn">
+                    <i class="fas fa-bus"></i>
                     <span>Manage Buses</span>
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- Daily Report Card -->
-            <a href="#" class="admin-dashboard-card" onclick="handleCardClick('Daily Report')">
-                <i class="fas fa-chart-line"></i>
-                <h3>Daily Report</h3>
-                <p>View attendance reports, scan statistics, and system analytics. Track daily activity.</p>
-                <div class="card-footer">
-                    <span>Coming Soon</span>
-                    <i class="fas fa-clock"></i>
-                </div>
-            </a>
+                </a>
+            </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="recent-activity">
-            <h3><i class="fas fa-history"></i> Today's Overview</h3>
-            <div class="activity-stats">
-                <div class="activity-item">
-                    <i class="fas fa-qrcode"></i>
-                    <div>
-                        <strong>{{ today_scans }}</strong>
-                        <span>Scans Today</span>
-                    </div>
+        <!-- System Status -->
+        <div class="system-status">
+            <h3><i class="fas fa-server"></i> System Status</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Database</span>
+                    <span class="status-badge status-active">Connected</span>
                 </div>
-                <div class="activity-item">
-                    <i class="fas fa-clock"></i>
-                    <div>
-                        <strong>{{ now.strftime('%I:%M %p') }}</strong>
-                        <span>Current Time</span>
-                    </div>
+                <div class="status-item">
+                    <span class="status-label">Scanner</span>
+                    <span class="status-badge status-active">Available</span>
                 </div>
-                <div class="activity-item">
-                    <i class="fas fa-calendar-day"></i>
-                    <div>
-                        <strong>{{ now.strftime('%d %b, %Y') }}</strong>
-                        <span>Current Date</span>
-                    </div>
+                <div class="status-item">
+                    <span class="status-label">Last Backup</span>
+                    <span class="status-value">{{ now.strftime('%d %b, %Y') }}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">System Time</span>
+                    <span class="status-value">{{ now.strftime('%I:%M %p') }}</span>
                 </div>
             </div>
         </div>
 
         <!-- Footer Note -->
-        <div style="text-align: center; margin-top: 50px; color: var(--text-secondary); font-size: 0.9rem;">
+        <div class="footer-note">
             <i class="fas fa-shield-alt"></i> Administrative access only
         </div>
     </main>
@@ -165,11 +140,4 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-<script>
-function handleCardClick(feature) {
-    if (feature === 'Daily Report') {
-        alert('Daily Reports feature is coming soon!');
-    }
-}
-</script>
 {% endblock %}

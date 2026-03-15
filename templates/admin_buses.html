@@ -26,9 +26,6 @@
                 <a href="{{ url_for('admin_buses') }}" class="active">
                     <i class="fas fa-bus"></i> Manage Buses
                 </a>
-                <a href="#" onclick="handleCardClick('Daily Report')">
-                    <i class="fas fa-chart-line"></i> Daily Report
-                </a>
             </nav>
             
             <div class="admin-user">
@@ -42,33 +39,16 @@
     </header>
 
     <main class="admin-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}" data-category="{{ category }}">
-                            <i class="fas 
-                                {% if category == 'success' %}fa-check-circle
-                                {% elif category == 'error' %}fa-exclamation-circle
-                                {% elif category == 'warning' %}fa-exclamation-triangle
-                                {% else %}fa-info-circle
-                                {% endif %}">
-                            </i>
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <div class="flash-messages"></div>
 
         <div class="bus-management-container">
             <div class="admin-page-header">
                 <h1>Manage Buses</h1>
-                <p>Add, edit, and manage bus fleet information</p>
+                <p>Add and manage bus fleet</p>
             </div>
 
-            <!-- Statistics Cards -->
-            <div class="stats-grid">
+            <!-- Minimal Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 400px; margin: 0 auto 30px;">
                 <div class="stat-card">
                     <i class="fas fa-bus"></i>
                     <div class="stat-value">{{ stats.total_buses }}</div>
@@ -79,164 +59,113 @@
                     <div class="stat-value">{{ stats.active_buses }}</div>
                     <div class="stat-label">Active Buses</div>
                 </div>
-                <div class="stat-card">
-                    <i class="fas fa-tools"></i>
-                    <div class="stat-value">{{ stats.maintenance_buses }}</div>
-                    <div class="stat-label">In Maintenance</div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-users"></i>
-                    <div class="stat-value">{{ stats.total_capacity }}</div>
-                    <div class="stat-label">Total Capacity</div>
-                </div>
             </div>
 
-            <!-- Add Bus Form -->
-            <div class="add-bus-section">
-                <div class="add-bus-card">
-                    <h3><i class="fas fa-plus-circle"></i> Add New Bus</h3>
-                    <form method="POST" action="{{ url_for('admin_add_bus') }}" id="addBusForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Bus Number *</label>
-                                <input type="text" name="bus_number" required placeholder="e.g., BUS-101">
-                            </div>
-                            <div class="form-group">
-                                <label>Route Name *</label>
-                                <input type="text" name="route_name" required placeholder="e.g., North Campus">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Capacity *</label>
-                                <input type="number" name="capacity" required min="1" placeholder="e.g., 50">
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select name="status">
-                                    <option value="active">Active</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Driver Name *</label>
-                                <input type="text" name="driver_name" required placeholder="Driver full name">
-                            </div>
-                            <div class="form-group">
-                                <label>Driver Phone *</label>
-                                <input type="tel" name="driver_phone" required placeholder="10-digit mobile number">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Driver License (Optional)</label>
-                                <input type="text" name="driver_license" placeholder="License number">
-                            </div>
-                        </div>
-                        
+            <!-- Add Bus Form (Simplified) -->
+            <div class="form-card" style="max-width: 600px; margin: 0 auto 30px;">
+                <h3><i class="fas fa-plus-circle"></i> Add New Bus</h3>
+                <form id="addBusForm">
+                    <div class="form-row">
                         <div class="form-group">
-                            <label>Notes (Optional)</label>
-                            <textarea name="notes" placeholder="Any additional information about the bus"></textarea>
+                            <label>Bus Number *</label>
+                            <input type="text" name="bus_number" required placeholder="BUS-101">
                         </div>
-                        
-                        <button type="submit" class="btn-add">
-                            <i class="fas fa-plus-circle"></i> Add Bus
-                        </button>
-                    </form>
+                        <div class="form-group">
+                            <label>Route Name *</label>
+                            <input type="text" name="route_name" required placeholder="North Campus">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Driver Name *</label>
+                            <input type="text" name="driver_name" required placeholder="Driver name">
+                        </div>
+                        <div class="form-group">
+                            <label>Driver Phone *</label>
+                            <input type="tel" name="driver_phone" required placeholder="9876543210">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="status">
+                            <option value="active">Active</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-add" id="addBusBtn">
+                        <i class="fas fa-plus-circle"></i> Add Bus
+                    </button>
+                </form>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="search-filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="busSearch" placeholder="Search by bus number, route, or driver...">
                 </div>
                 
-                <!-- Quick Tips -->
-                <div class="add-bus-card">
-                    <h3><i class="fas fa-lightbulb"></i> Bus Management Tips</h3>
-                    <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px;">
-                        <li>Use unique bus numbers for easy identification</li>
-                        <li>Keep driver contact information updated</li>
-                        <li>Mark buses as 'Maintenance' when out of service</li>
-                        <li>Regularly update bus capacity if modified</li>
-                        <li>Add notes for special requirements or conditions</li>
-                    </ul>
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,45,117,0.1); border-radius: var(--radius-md);">
-                        <i class="fas fa-info-circle" style="color: var(--bg-pink); margin-right: 8px;"></i>
-                        <span style="color: white;">Total active capacity: <strong>{{ stats.total_capacity }}</strong> students</span>
-                    </div>
+                <div class="filters">
+                    <select id="filterBusStatus" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    
+                    <button id="clearBusFilters" class="btn-clear-filters">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
                 </div>
             </div>
 
-            <!-- Bus Filters -->
-            <div class="bus-filters">
-                <button class="filter-btn active" data-filter="all">
-                    <i class="fas fa-list"></i> All Buses
-                </button>
-                <button class="filter-btn" data-filter="active">
-                    <i class="fas fa-check-circle"></i> Active
-                </button>
-                <button class="filter-btn" data-filter="maintenance">
-                    <i class="fas fa-tools"></i> Maintenance
-                </button>
-                <button class="filter-btn" data-filter="inactive">
-                    <i class="fas fa-times-circle"></i> Inactive
-                </button>
-            </div>
-
-            <!-- Buses Table -->
+            <!-- Buses Table (Simplified) -->
             {% if buses %}
-            <table class="buses-table">
-                <thead>
-                    <tr>
-                        <th>Bus Number</th>
-                        <th>Route</th>
-                        <th>Capacity</th>
-                        <th>Driver</th>
-                        <th>Contact</th>
-                        <th>Status</th>
-                        <th>Added On</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for bus in buses %}
-                    <tr data-bus-id="{{ bus[0] }}"
-                        data-number="{{ bus[1] }}"
-                        data-route="{{ bus[2] }}"
-                        data-capacity="{{ bus[3] }}"
-                        data-driver="{{ bus[4] }}"
-                        data-phone="{{ bus[5] }}"
-                        data-license="{{ bus[6] or '' }}"
-                        data-status="{{ bus[7] }}"
-                        data-notes="{{ bus[9] or '' }}">
-                        <td><strong>{{ bus[1] }}</strong></td>
-                        <td>{{ bus[2] }}</td>
-                        <td>{{ bus[3] }}</td>
-                        <td>{{ bus[4] }}</td>
-                        <td>{{ bus[5] }}</td>
-                        <td>
-                            <span class="status-badge status-{{ bus[7] }}">
-                                {{ bus[7]|capitalize }}
-                            </span>
-                        </td>
-                        <td>{{ bus[8].strftime('%d-%m-%Y') if bus[8] else 'N/A' }}</td>
-                        <td>
-                            <div class="table-actions">
-                                <button class="btn-edit edit-bus-btn" data-id="{{ bus[0] }}">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <form method="POST" action="{{ url_for('admin_delete_bus', bus_id=bus[0]) }}" class="delete-bus-form" style="display: inline;">
-                                    <button type="submit" class="btn-delete" data-type="bus" data-bus="{{ bus[1] }}">
+            <div class="table-responsive">
+                <table class="buses-table" id="busesTable">
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Route</th>
+                            <th>Driver</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="busesTableBody">
+                        {% for bus in buses %}
+                        <tr data-bus-id="{{ bus[0] }}">
+                            <td><strong>{{ bus[1] }}</strong></td>
+                            <td>{{ bus[2] }}</td>
+                            <td>{{ bus[3] }}</td>
+                            <td>{{ bus[4] }}</td>
+                            <td>
+                                <span class="status-badge status-{{ bus[5] }}">
+                                    {{ bus[5]|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn-edit btn-edit-bus" 
+                                            data-id="{{ bus[0] }}">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn-delete btn-delete-bus" 
+                                            data-id="{{ bus[0] }}">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
             <div class="no-data">
                 <i class="fas fa-bus"></i>
@@ -246,68 +175,50 @@
         </div>
     </main>
 
-    <!-- Edit Bus Modal -->
+    <!-- Edit Bus Modal (Simplified) -->
     <div id="editBusModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Edit Bus Details</h3>
+                <h3><i class="fas fa-edit"></i> Edit Bus</h3>
                 <button class="modal-close">&times;</button>
             </div>
             
-            <form method="POST" action="" id="editBusForm" class="edit-bus-form">
-                <input type="hidden" name="bus_id" id="edit_bus_id">
+            <form id="editBusForm">
+                <input type="hidden" id="editBusId" name="bus_id">
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Bus Number *</label>
-                        <input type="text" name="bus_number" id="edit_bus_number" required>
+                        <input type="text" id="editBusNumber" name="bus_number" required>
                     </div>
                     <div class="form-group">
                         <label>Route Name *</label>
-                        <input type="text" name="route_name" id="edit_route_name" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Capacity *</label>
-                        <input type="number" name="capacity" id="edit_capacity" required min="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select name="status" id="edit_status">
-                            <option value="active">Active</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
+                        <input type="text" id="editBusRoute" name="route_name" required>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Driver Name *</label>
-                        <input type="text" name="driver_name" id="edit_driver_name" required>
+                        <input type="text" id="editBusDriver" name="driver_name" required>
                     </div>
                     <div class="form-group">
                         <label>Driver Phone *</label>
-                        <input type="tel" name="driver_phone" id="edit_driver_phone" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Driver License</label>
-                        <input type="text" name="driver_license" id="edit_driver_license">
+                        <input type="tel" id="editBusPhone" name="driver_phone" required>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>Notes</label>
-                    <textarea name="notes" id="edit_notes" rows="3"></textarea>
+                    <label>Status</label>
+                    <select id="editBusStatus" name="status">
+                        <option value="active">Active</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
                 </div>
                 
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" class="btn-add modal-cancel" style="background: #666;">Cancel</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn-add modal-cancel">Cancel</button>
                     <button type="submit" class="btn-add">Update Bus</button>
                 </div>
             </form>
@@ -319,13 +230,4 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-<script>
-// Set form action for edit modal
-document.getElementById('editBusForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const busId = document.getElementById('edit_bus_id').value;
-    this.action = "{{ url_for('admin_update_bus', bus_id=0) }}".replace('0', busId);
-    this.submit();
-});
-</script>
 {% endblock %}

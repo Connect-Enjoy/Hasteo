@@ -26,9 +26,6 @@
                 <a href="{{ url_for('admin_buses') }}">
                     <i class="fas fa-bus"></i> Manage Buses
                 </a>
-                <a href="#" onclick="handleCardClick('Daily Report')">
-                    <i class="fas fa-chart-line"></i> Daily Report
-                </a>
             </nav>
             
             <div class="admin-user">
@@ -42,29 +39,12 @@
     </header>
 
     <main class="admin-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}" data-category="{{ category }}">
-                            <i class="fas 
-                                {% if category == 'success' %}fa-check-circle
-                                {% elif category == 'error' %}fa-exclamation-circle
-                                {% elif category == 'warning' %}fa-exclamation-triangle
-                                {% else %}fa-info-circle
-                                {% endif %}">
-                            </i>
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <div class="flash-messages"></div>
 
         <div class="user-management-container">
             <div class="admin-page-header">
                 <h1>Manage Users</h1>
-                <p>Add, edit, or remove students and security personnel</p>
+                <p>Add, edit, and manage users</p>
             </div>
 
             <!-- Statistics Cards -->
@@ -91,119 +71,6 @@
                 </div>
             </div>
 
-            <!-- Add User Forms -->
-            <div class="add-user-section">
-                <!-- Add Student Form -->
-                <div class="add-user-card">
-                    <h3><i class="fas fa-user-graduate"></i> Add New Student</h3>
-                    <form method="POST" action="{{ url_for('admin_add_student') }}" id="addStudentForm">
-                        <div class="form-group">
-                            <label>Full Name *</label>
-                            <input type="text" name="name" required placeholder="Enter student's full name">
-                        </div>
-                        <div class="form-group">
-                            <label>Branch *</label>
-                            <select name="branch" required>
-                                <option value="">Select Branch</option>
-                                <option value="CS">Computer Science & Engineering</option>
-                                <option value="EC">Electronics & Communication</option>
-                                <option value="EE">Electrical & Electronics</option>
-                                <option value="ME">Mechanical Engineering</option>
-                                <option value="CE">Civil Engineering</option>
-                                <option value="AU">Automobile Engineering</option>
-                                <option value="CO">CSE (Data Science)</option>
-                                <option value="CT">CSE (AI)</option>
-                                <option value="EV">ECE (VLSI)</option>
-                                <option value="CV">Civil & Environmental</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Year of Admission *</label>
-                            <select name="year_of_admission" required>
-                                <option value="">Select Year</option>
-                                {% for year in range(2020, 2027) %}
-                                <option value="{{ year }}">{{ year }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>College Student ID *</label>
-                            <input type="text" name="student_id" required placeholder="e.g., SCS/12345/23">
-                            <small style="color: var(--text-secondary);">Format: SCS/12345/23</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Registration Number *</label>
-                            <input type="text" name="registration_number" required placeholder="University registration number">
-                        </div>
-                        <div class="form-group">
-                            <label>Email *</label>
-                            <input type="email" name="email" required placeholder="student@college.edu">
-                        </div>
-                        <div class="form-group">
-                            <label>Password *</label>
-                            <input type="password" name="password" required placeholder="Enter password">
-                        </div>
-                        <button type="submit" class="btn-add">
-                            <i class="fas fa-plus-circle"></i> Add Student
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Add Security Form -->
-                <div class="add-user-card">
-                    <h3><i class="fas fa-shield-alt"></i> Add Security Personnel</h3>
-                    <form method="POST" action="{{ url_for('admin_add_security') }}" id="addSecurityForm">
-                        <div class="form-group">
-                            <label>Security ID *</label>
-                            <input type="text" name="security_id" required placeholder="e.g., SEC001">
-                            <small style="color: var(--text-secondary);">Format: SEC001, SEC002, etc.</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Full Name *</label>
-                            <input type="text" name="name" required placeholder="Enter full name">
-                        </div>
-                        <div class="form-group">
-                            <label>Email *</label>
-                            <input type="email" name="email" required placeholder="security@college.edu">
-                        </div>
-                        <div class="form-group">
-                            <label>Password *</label>
-                            <input type="password" name="password" required placeholder="Enter password">
-                        </div>
-                        <button type="submit" class="btn-add">
-                            <i class="fas fa-plus-circle"></i> Add Security
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Delete by Year Section -->
-            <div class="delete-year-section">
-                <h4 class="delete-year-title">
-                    <i class="fas fa-trash-alt"></i>
-                    Delete Students by Batch Year (4+ years old)
-                </h4>
-                <form method="POST" action="{{ url_for('admin_delete_students_by_year') }}" class="delete-year-form" id="deleteByYearForm">
-                    <div class="form-group">
-                        <label>Select Year of Admission</label>
-                        <select name="year" required>
-                            <option value="">Choose year</option>
-                            {% for year, count in stats.students_by_year.items() %}
-                                {% if 2026 - year >= 4 %}
-                                <option value="{{ year }}">{{ year }} ({{ count }} students)</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-delete-year">
-                        <i class="fas fa-trash-alt"></i> Delete Batch
-                    </button>
-                </form>
-                <p class="delete-year-note">
-                    <i class="fas fa-info-circle"></i> This will deactivate all students from the selected batch year (only batches 4+ years old).
-                </p>
-            </div>
-
             <!-- Users Tabs -->
             <div class="users-tabs">
                 <button class="tab-btn active" data-tab="students">
@@ -216,93 +83,365 @@
 
             <!-- Students Tab -->
             <div id="students-tab" class="tab-pane active">
-                {% if students %}
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Branch</th>
-                            <th>Year</th>
-                            <th>Reg. No.</th>
-                            <th>Email</th>
-                            <th>Added On</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr>
-                            <td><strong>{{ student[0] }}</strong></td>
-                            <td>{{ student[1] }}</td>
-                            <td>
-                                <span class="branch-badge branch-{{ student[2]|lower }}">
-                                    {{ student[2] }}
-                                </span>
-                            </td>
-                            <td>{{ student[3] }}</td>
-                            <td>{{ student[4] }}</td>
-                            <td>{{ student[5] }}</td>
-                            <td>{{ student[6].strftime('%d-%m-%Y') if student[6] else 'N/A' }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('admin_delete_student', student_id=student[0]) }}" class="delete-form">
-                                    <button type="submit" class="btn-delete" data-type="student" data-id="{{ student[0] }}">
-                                        <i class="fas fa-trash"></i> Delete
+                <!-- Two Column Layout: Add Student + Batch Management -->
+                <div class="two-column-layout">
+                    <!-- Left Column: Add Student Form -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-user-plus"></i> Add New Student</h3>
+                        <form id="addStudentForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Full Name *</label>
+                                    <input type="text" name="name" required placeholder="Enter full name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Branch *</label>
+                                    <select name="branch" required>
+                                        <option value="">Select Branch</option>
+                                        <option value="CS">Computer Science & Engineering</option>
+                                        <option value="EC">Electronics & Communication</option>
+                                        <option value="EE">Electrical & Electronics</option>
+                                        <option value="ME">Mechanical Engineering</option>
+                                        <option value="CE">Civil Engineering</option>
+                                        <option value="AU">Automobile Engineering</option>
+                                        <option value="CO">CSE (Data Science)</option>
+                                        <option value="CT">CSE (AI)</option>
+                                        <option value="EV">ECE (VLSI)</option>
+                                        <option value="CV">Civil & Environmental</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Year of Admission *</label>
+                                    <select name="year_of_admission" required>
+                                        <option value="">Select Year</option>
+                                        {% for year in range(2020, 2027) %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Residence *</label>
+                                    <select name="residence" required>
+                                        <option value="day_scholar">Day Scholar</option>
+                                        <option value="hosteller">Hosteller</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Student ID *</label>
+                                    <input type="text" name="student_id" required placeholder="SCS/12345/23">
+                                </div>
+                                <div class="form-group">
+                                    <label>Reg Number *</label>
+                                    <input type="text" name="registration_number" required placeholder="Registration number">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Email *</label>
+                                    <input type="email" name="email" required placeholder="student@college.edu">
+                                </div>
+                                <div class="form-group">
+                                    <label>Password *</label>
+                                    <input type="password" name="password" required placeholder="Enter password">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-add" id="addStudentBtn">
+                                <i class="fas fa-plus-circle"></i> Add Student
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Right Column: Batch Management -->
+                    <div class="form-card">
+                        <h3><i class="fas fa-layer-group"></i> Batch Management</h3>
+                        
+                        {% if eligible_batches %}
+                            <div class="eligible-batches">
+                                <p class="batch-note">
+                                    <i class="fas fa-info-circle"></i> Eligible Batches for Removal (4+ years old)
+                                </p>
+                                
+                                {% for year, count in eligible_batches.items() %}
+                                <div class="batch-item" data-year="{{ year }}">
+                                    <div class="batch-info">
+                                        <span class="batch-year">{{ year }}</span>
+                                        <span class="batch-count">{{ count }} students</span>
+                                    </div>
+                                    <button type="button" 
+                                            class="btn-delete-batch" 
+                                            data-year="{{ year }}"
+                                            data-count="{{ count }}">
+                                        <i class="fas fa-trash-alt"></i> Delete Batch
                                     </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="no-data">
-                    <i class="fas fa-user-graduate"></i>
-                    <p>No students found. Add your first student above.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="no-eligible-batches">
+                                <i class="fas fa-check-circle"></i> No batches eligible for removal
+                            </p>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
+
+                <!-- Search and Filters -->
+                <div class="search-filters-section">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="studentSearch" placeholder="Search by name, ID, or branch...">
+                    </div>
+                    
+                    <div class="filters">
+                        <select id="filterBranch" class="filter-select">
+                            <option value="">All Branches</option>
+                            <option value="CS">Computer Science</option>
+                            <option value="EC">Electronics</option>
+                            <option value="EE">Electrical</option>
+                            <option value="ME">Mechanical</option>
+                            <option value="CE">Civil</option>
+                            <option value="AU">Automobile</option>
+                            <option value="CO">Data Science</option>
+                            <option value="CT">AI</option>
+                            <option value="EV">VLSI</option>
+                            <option value="CV">Civil & Environmental</option>
+                        </select>
+                        
+                        <select id="filterYear" class="filter-select">
+                            <option value="">All Years</option>
+                            {% for year in range(2020, 2027) %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <select id="filterResidence" class="filter-select">
+                            <option value="">All Residence</option>
+                            <option value="day_scholar">Day Scholar</option>
+                            <option value="hosteller">Hosteller</option>
+                        </select>
+                        
+                        <button id="clearFilters" class="btn-clear-filters">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Students Table -->
+                <div class="table-responsive">
+                    <table class="users-table" id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Branch</th>
+                                <th>Year</th>
+                                <th>Residence</th>
+                                <th>Reg No.</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            {% for student in students %}
+                            <tr data-student-id="{{ student[0] }}">
+                                <td><strong>{{ student[1] }}</strong></td>
+                                <td>{{ student[2] }}</td>
+                                <td>
+                                    <span class="branch-badge branch-{{ student[3]|lower }}">
+                                        {{ student[3] }}
+                                    </span>
+                                </td>
+                                <td>{{ student[4] }}</td>
+                                <td>
+                                    <span class="residence-badge {{ student[7] }}">
+                                        {% if student[7] == 'day_scholar' %}Day Scholar{% else %}Hosteller{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ student[5] }}</td>
+                                <td>{{ student[6] }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-edit btn-edit-student" 
+                                                data-id="{{ student[0] }}">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn-delete btn-delete-student" 
+                                                data-id="{{ student[0] }}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Security Tab -->
             <div id="security-tab" class="tab-pane">
-                {% if security %}
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>Security ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Added On</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for person in security %}
-                        <tr>
-                            <td><strong>{{ person[0] }}</strong></td>
-                            <td>{{ person[1] }}</td>
-                            <td>{{ person[2] }}</td>
-                            <td>{{ person[3].strftime('%d-%m-%Y') if person[3] else 'N/A' }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('admin_delete_security', security_id=person[0]) }}" class="delete-form">
-                                    <button type="submit" class="btn-delete" data-type="security" data-id="{{ person[0] }}">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="no-data">
-                    <i class="fas fa-shield-alt"></i>
-                    <p>No security personnel found. Add your first security member above.</p>
+                <div class="form-card" style="max-width: 600px; margin: 0 auto 30px;">
+                    <h3><i class="fas fa-user-shield"></i> Add Security Personnel</h3>
+                    <form id="addSecurityForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Security ID *</label>
+                                <input type="text" name="security_id" required placeholder="SEC001">
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" name="name" required placeholder="Enter full name">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email *</label>
+                                <input type="email" name="email" required placeholder="security@college.edu">
+                            </div>
+                            <div class="form-group">
+                                <label>Password *</label>
+                                <input type="password" name="password" required placeholder="Enter password">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-add" id="addSecurityBtn">
+                            <i class="fas fa-plus-circle"></i> Add Security
+                        </button>
+                    </form>
                 </div>
-                {% endif %}
+
+                <!-- Security Table -->
+                <div class="table-responsive">
+                    <table class="users-table" id="securityTable">
+                        <thead>
+                            <tr>
+                                <th>Security ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="securityTableBody">
+                            {% for person in security %}
+                            <tr data-security-id="{{ person[0] }}">
+                                <td><strong>{{ person[1] }}</strong></td>
+                                <td>{{ person[2] }}</td>
+                                <td>{{ person[3] }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-delete btn-delete-security" 
+                                                data-id="{{ person[0] }}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Student</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            
+            <form id="editStudentForm">
+                <input type="hidden" id="editStudentId" name="student_id">
+                
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="editStudentName" name="name" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Branch *</label>
+                        <select id="editStudentBranch" name="branch" required>
+                            <option value="CS">Computer Science & Engineering</option>
+                            <option value="EC">Electronics & Communication</option>
+                            <option value="EE">Electrical & Electronics</option>
+                            <option value="ME">Mechanical Engineering</option>
+                            <option value="CE">Civil Engineering</option>
+                            <option value="AU">Automobile Engineering</option>
+                            <option value="CO">CSE (Data Science)</option>
+                            <option value="CT">CSE (AI)</option>
+                            <option value="EV">ECE (VLSI)</option>
+                            <option value="CV">Civil & Environmental</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year *</label>
+                        <select id="editStudentYear" name="year_of_admission" required>
+                            {% for year in range(2020, 2027) %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Residence *</label>
+                        <select id="editStudentResidence" name="residence" required>
+                            <option value="day_scholar">Day Scholar</option>
+                            <option value="hosteller">Hosteller</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Number *</label>
+                        <input type="text" id="editStudentReg" name="registration_number" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="editStudentEmail" name="email" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-add modal-cancel">Cancel</button>
+                    <button type="submit" class="btn-add">Update Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle" style="color: #f44336;"></i> Confirm Delete</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            
+            <div class="delete-confirm-content">
+                <p id="deleteConfirmMessage">Are you sure you want to delete this item?</p>
+                <p class="delete-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</p>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-add modal-cancel">Cancel</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-add" style="background: #f44336;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 {% endblock %}
 
