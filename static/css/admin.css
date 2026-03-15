@@ -94,13 +94,11 @@
   color: var(--text-primary);
   text-decoration: none;
   font-weight: 600;
-  padding: 10px 16px 18px 16px;
+  padding: 10px 20px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.05rem;
-  position: relative;
   transition: all 0.3s ease;
 }
 
@@ -110,23 +108,8 @@
   transition: all 0.3s ease;
 }
 
-.admin-nav a::after {
-  content: '';
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: var(--bg-pink);
-  transition: all 0.3s ease;
-  transform: translateX(-50%);
-  opacity: 0;
-  box-shadow: 0 0 10px var(--bg-pink);
-}
-
-.admin-nav a:hover::after {
-  width: 60%;
-  opacity: 1;
+.admin-nav a:hover {
+  background: rgba(255,255,255,0.1);
 }
 
 .admin-nav a:hover i {
@@ -134,7 +117,8 @@
 }
 
 .admin-nav a.active {
-  background: transparent;
+  background: rgba(255,45,117,0.2);
+  color: var(--bg-pink);
 }
 
 .admin-nav a.active i {
@@ -908,7 +892,7 @@
   box-shadow: 0 4px 10px rgba(244, 67, 54, 0.4);
 }
 
-/* Modal Styles */
+/* Modal Styles - Updated for consistency */
 .modal {
   display: none;
   position: fixed;
@@ -918,14 +902,19 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
-  z-index: 2000;
+  z-index: 9999;
   align-items: center;
   justify-content: center;
 }
 
 .modal.active {
   display: flex;
-  animation: fadeIn 0.3s ease;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
@@ -937,9 +926,15 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   position: relative;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-header {
@@ -948,16 +943,16 @@
   align-items: center;
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgba(255, 45, 117, 0.3);
 }
 
 .modal-header h3 {
   color: white;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   background: linear-gradient(135deg, #ffffff, var(--bg-pink));
   -webkit-background-clip: text;
   background-clip: text;
@@ -966,13 +961,14 @@
 
 .modal-header i {
   color: var(--bg-pink);
+  font-size: 1.5rem;
 }
 
 .modal-close {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 1.8rem;
+  font-size: 2rem;
   cursor: pointer;
   padding: 5px;
   line-height: 1;
@@ -1041,44 +1037,77 @@
   font-size: 0.95rem;
   margin: 0;
   background: linear-gradient(135deg, var(--bg-blue), var(--bg-pink));
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-actions .btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 45, 117, 0.4);
 }
 
 .modal-actions .btn-add.modal-cancel {
-  background: #666 !important;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: none;
 }
 
 .modal-actions .btn-add.modal-cancel:hover {
-  background: #777 !important;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Delete Confirmation Modal */
+/* Delete Confirmation Modal - Enhanced */
+#deleteConfirmModal .modal-content {
+  max-width: 450px;
+  text-align: center;
+}
+
 .delete-confirm-content {
   padding: 10px 0;
 }
 
 .delete-confirm-content p {
   color: white;
-  margin-bottom: 15px;
-  font-size: 1.1rem;
-  line-height: 1.5;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  line-height: 1.6;
 }
 
 .delete-confirm-content .delete-warning {
-  color: #f44336;
-  font-size: 0.95rem;
+  color: #ff6b6b;
+  font-size: 1rem;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(244, 67, 54, 0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(244, 67, 54, 0.2);
+  justify-content: center;
+  gap: 10px;
+  padding: 15px;
+  background: rgba(244, 67, 54, 0.15);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  margin: 20px 0;
 }
 
 .delete-confirm-content .delete-warning i {
-  font-size: 1rem;
+  font-size: 1.2rem;
+  color: #f44336;
+}
+
+#deleteConfirmModal .modal-actions {
+  justify-content: center;
+}
+
+#confirmDeleteBtn {
+  background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+  border: none;
+}
+
+#confirmDeleteBtn:hover {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c) !important;
+  box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4) !important;
 }
 
 /* No Data State */
@@ -1104,12 +1133,12 @@
   margin: 0;
 }
 
-/* Flash Messages */
+/* Flash Messages - Fixed positioning */
 .flash-messages {
   position: fixed;
   top: 100px;
   right: 30px;
-  z-index: 1100;
+  z-index: 10000;
   max-width: 400px;
 }
 
@@ -1127,6 +1156,7 @@
   gap: 12px;
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid transparent;
 }
 
 @keyframes slideInRight {
@@ -1140,10 +1170,10 @@
   }
 }
 
-.flash-message.success { border-left: 4px solid var(--admin-success); }
-.flash-message.error { border-left: 4px solid var(--admin-danger); }
-.flash-message.warning { border-left: 4px solid var(--admin-warning); }
-.flash-message.info { border-left: 4px solid var(--admin-info); }
+.flash-message.success { border-left-color: var(--admin-success); }
+.flash-message.error { border-left-color: var(--admin-danger); }
+.flash-message.warning { border-left-color: var(--admin-warning); }
+.flash-message.info { border-left-color: var(--admin-info); }
 
 .flash-message i {
   font-size: 1.2rem;
@@ -1177,7 +1207,7 @@
   }
   
   .admin-nav a {
-    padding: 8px 12px 16px 12px;
+    padding: 8px 16px;
     font-size: 0.95rem;
   }
   
@@ -1407,58 +1437,5 @@
   .footer-note {
     margin-top: 30px;
     font-size: 0.85rem;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 360px) {
-  .admin-page-header h1 {
-    font-size: 1.6rem;
-  }
-  
-  .form-card {
-    padding: 15px 12px;
-  }
-  
-  .form-card h3 {
-    font-size: 1.1rem;
-  }
-  
-  .form-card .form-group input,
-  .form-card .form-group select {
-    padding: 10px 12px;
-    height: 44px;
-    font-size: 0.9rem;
-  }
-  
-  .form-card .btn-add {
-    height: 46px;
-    font-size: 0.95rem;
-    padding: 0 14px;
-  }
-  
-  .search-box input {
-    padding: 10px 10px 10px 36px;
-    height: 44px;
-    font-size: 0.9rem;
-  }
-  
-  .filter-select {
-    padding: 10px 12px;
-    height: 44px;
-    font-size: 0.9rem;
-  }
-  
-  .btn-clear-filters {
-    padding: 10px 14px;
-    height: 44px;
-    font-size: 0.9rem;
-  }
-  
-  .branch-badge,
-  .residence-badge,
-  .status-badge {
-    padding: 3px 8px;
-    font-size: 0.75rem;
   }
 }

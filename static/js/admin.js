@@ -1,13 +1,46 @@
 // admin.js - Hasteo Admin Dashboard JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin JS loaded - Fixed delete functionality'); // Debug log
+    
     initAdminDashboard();
     initUserManagement();
     initBusManagement();
     initFlashMessages();
     initModals();
     initSearchAndFilters();
+    
+    // Re-attach delete button listeners after any dynamic content changes
+    observeDOMChanges();
+    
+    // Directly initialize delete buttons on page load
+    setTimeout(() => {
+        initStudentDeleteButtons();
+        initSecurityDeleteButtons();
+        initBusDeleteButtons();
+        initBatchDelete();
+    }, 500);
 });
+
+// Observe DOM changes to re-attach event listeners
+function observeDOMChanges() {
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                // Re-initialize delete buttons
+                initStudentDeleteButtons();
+                initSecurityDeleteButtons();
+                initBusDeleteButtons();
+                initBatchDelete();
+            }
+        });
+    });
+    
+    const tables = document.querySelector('#studentsTableBody, #securityTableBody, #busesTableBody');
+    if (tables) {
+        observer.observe(tables, { childList: true, subtree: true });
+    }
+}
 
 function initAdminDashboard() {
     setupScrollBlur();
@@ -54,7 +87,7 @@ function initUserManagement() {
     initTabs();
     initAddStudentForm();
     initAddSecurityForm();
-    initStudentDeleteButtons();
+    initStudentDeleteButtons(); // Make sure this is called
     initSecurityDeleteButtons();
     initStudentEditButtons();
     initBatchDelete();
@@ -148,6 +181,9 @@ function filterStudents() {
     let visibleCount = 0;
     
     rows.forEach(row => {
+        // Skip the no results row
+        if (row.id && row.id.includes('no')) return;
+        
         const studentId = row.cells[0]?.textContent.toLowerCase() || '';
         const name = row.cells[1]?.textContent.toLowerCase() || '';
         const branch = row.cells[2]?.textContent.trim() || '';
@@ -184,6 +220,9 @@ function filterBuses() {
     let visibleCount = 0;
     
     rows.forEach(row => {
+        // Skip the no results row
+        if (row.id && row.id.includes('no')) return;
+        
         const busNumber = row.cells[0]?.textContent.toLowerCase() || '';
         const route = row.cells[1]?.textContent.toLowerCase() || '';
         const driver = row.cells[2]?.textContent.toLowerCase() || '';
@@ -219,9 +258,9 @@ function showNoResults(tableId, visibleCount) {
         if (!existingMsg) {
             const tr = document.createElement('tr');
             tr.id = `no${tableId}Results`;
-            tr.innerHTML = `<td colspan="8" style="text-align: center; padding: 30px;">
-                <i class="fas fa-search" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
-                No records match your search criteria
+            tr.innerHTML = `<td colspan="8" style="text-align: center; padding: 40px;">
+                <i class="fas fa-search" style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px; display: block; color: #ff2d75;"></i>
+                <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">No records match your search criteria</p>
             </td>`;
             tbody.appendChild(tr);
         }
@@ -377,103 +416,143 @@ function initAddBusForm() {
     });
 }
 
-// Delete Student
+// Delete Student - FIXED VERSION
 function initStudentDeleteButtons() {
-    document.querySelectorAll('.btn-delete-student').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const studentId = this.dataset.id;
-            const row = this.closest('tr');
-            
-            showDeleteConfirmation(
-                'Are you sure you want to delete this student?',
-                function() {
-                    fetch(`/admin/delete-student/${studentId}`, {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showNotification(data.message, 'success');
-                            row.remove();
-                            closeModal();
-                        } else {
-                            showNotification(data.error || 'Error deleting student', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        showNotification('Network error. Please try again.', 'error');
-                        console.error('Error:', error);
-                    });
-                }
-            );
-        });
+    const deleteButtons = document.querySelectorAll('.btn-delete-student');
+    console.log('Found student delete buttons:', deleteButtons.length); // Debug log
+    
+    deleteButtons.forEach(btn => {
+        // Remove any existing listeners to prevent duplicates
+        btn.removeEventListener('click', handleStudentDelete);
+        btn.addEventListener('click', handleStudentDelete);
     });
 }
 
-// Delete Security
+function handleStudentDelete(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const btn = e.currentTarget;
+    const studentId = btn.dataset.id;
+    const row = btn.closest('tr');
+    const studentName = row?.cells[1]?.textContent || 'Student';
+    
+    console.log('Delete student clicked:', studentId); // Debug log
+    
+    showDeleteConfirmation(
+        `Are you sure you want to delete ${studentName}?`,
+        function() {
+            fetch(`/admin/delete-student/${studentId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    if (row) row.remove();
+                    closeModal();
+                } else {
+                    showNotification(data.error || 'Error deleting student', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Network error. Please try again.', 'error');
+                console.error('Error:', error);
+            });
+        }
+    );
+}
+
+// Delete Security - FIXED VERSION
 function initSecurityDeleteButtons() {
-    document.querySelectorAll('.btn-delete-security').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const securityId = this.dataset.id;
-            const row = this.closest('tr');
-            
-            showDeleteConfirmation(
-                'Are you sure you want to delete this security personnel?',
-                function() {
-                    fetch(`/admin/delete-security/${securityId}`, {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showNotification(data.message, 'success');
-                            row.remove();
-                            closeModal();
-                        } else {
-                            showNotification(data.error || 'Error deleting security', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        showNotification('Network error. Please try again.', 'error');
-                        console.error('Error:', error);
-                    });
-                }
-            );
-        });
+    const deleteButtons = document.querySelectorAll('.btn-delete-security');
+    console.log('Found security delete buttons:', deleteButtons.length); // Debug log
+    
+    deleteButtons.forEach(btn => {
+        btn.removeEventListener('click', handleSecurityDelete);
+        btn.addEventListener('click', handleSecurityDelete);
     });
 }
 
-// Delete Bus
-function initBusDeleteButtons() {
-    document.querySelectorAll('.btn-delete-bus').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const busId = this.dataset.id;
-            const row = this.closest('tr');
-            
-            showDeleteConfirmation(
-                'Are you sure you want to delete this bus?',
-                function() {
-                    fetch(`/admin/delete-bus/${busId}`, {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showNotification(data.message, 'success');
-                            row.remove();
-                            closeModal();
-                        } else {
-                            showNotification(data.error || 'Error deleting bus', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        showNotification('Network error. Please try again.', 'error');
-                        console.error('Error:', error);
-                    });
+function handleSecurityDelete(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const btn = e.currentTarget;
+    const securityId = btn.dataset.id;
+    const row = btn.closest('tr');
+    const securityName = row?.cells[1]?.textContent || 'Security personnel';
+    
+    console.log('Delete security clicked:', securityId); // Debug log
+    
+    showDeleteConfirmation(
+        `Are you sure you want to delete ${securityName}?`,
+        function() {
+            fetch(`/admin/delete-security/${securityId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    if (row) row.remove();
+                    closeModal();
+                } else {
+                    showNotification(data.error || 'Error deleting security', 'error');
                 }
-            );
-        });
+            })
+            .catch(error => {
+                showNotification('Network error. Please try again.', 'error');
+                console.error('Error:', error);
+            });
+        }
+    );
+}
+
+// Delete Bus - FIXED VERSION
+function initBusDeleteButtons() {
+    const deleteButtons = document.querySelectorAll('.btn-delete-bus');
+    console.log('Found bus delete buttons:', deleteButtons.length); // Debug log
+    
+    deleteButtons.forEach(btn => {
+        btn.removeEventListener('click', handleBusDelete);
+        btn.addEventListener('click', handleBusDelete);
     });
+}
+
+function handleBusDelete(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const btn = e.currentTarget;
+    const busId = btn.dataset.id;
+    const row = btn.closest('tr');
+    const busNumber = row?.cells[0]?.textContent || 'Bus';
+    
+    console.log('Delete bus clicked:', busId); // Debug log
+    
+    showDeleteConfirmation(
+        `Are you sure you want to delete bus ${busNumber}?`,
+        function() {
+            fetch(`/admin/delete-bus/${busId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    if (row) row.remove();
+                    closeModal();
+                } else {
+                    showNotification(data.error || 'Error deleting bus', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Network error. Please try again.', 'error');
+                console.error('Error:', error);
+            });
+        }
+    );
 }
 
 // Edit Student
@@ -665,10 +744,15 @@ function showDeleteConfirmation(message, callback) {
     const modal = document.getElementById('deleteConfirmModal');
     const messageEl = document.getElementById('deleteConfirmMessage');
     
+    if (!modal || !messageEl) return;
+    
+    console.log('Showing delete confirmation'); // Debug log
+    
     messageEl.textContent = message;
     deleteCallback = callback;
     
     modal.classList.add('active');
+    modal.style.display = 'flex'; // Ensure modal is visible
 }
 
 // Modal handling
@@ -706,6 +790,7 @@ function initModals() {
 function closeModal() {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('active');
+        modal.style.display = 'none'; // Hide modal
     });
     deleteCallback = null;
 }
@@ -725,27 +810,25 @@ function showNotification(message, type = 'info') {
     
     // Auto-hide after 3 seconds
     setTimeout(() => {
-        notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 300);
+        hideFlashMessage(notification);
     }, 3000);
     
     // Click to dismiss
     notification.addEventListener('click', () => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 300);
+        hideFlashMessage(notification);
     });
+}
+
+function hideFlashMessage(message) {
+    message.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    message.style.opacity = '0';
+    message.style.transform = 'translateX(100%)';
+    
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.remove();
+        }
+    }, 300);
 }
 
 function getIconForType(type) {
@@ -764,15 +847,7 @@ function initFlashMessages() {
     
     flashMessages.forEach(message => {
         setTimeout(() => {
-            message.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            message.style.opacity = '0';
-            message.style.transform = 'translateX(100%)';
-            
-            setTimeout(() => {
-                if (message.parentNode) {
-                    message.remove();
-                }
-            }, 300);
+            hideFlashMessage(message);
         }, 3000);
     });
 }
