@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<body class="student-body">
+    <header class="student-header">
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
+                <div class="logo-text">Hasteo</div>
+            </a>
+            
+            <nav class="student-nav">
+                <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                <a href="{{ url_for('student_attendance') }}"><i class="fas fa-calendar-check"></i> My Attendance</a>
+                <a href="{{ url_for('student_profile') }}" class="active"><i class="fas fa-user"></i> Profile</a>
+            </nav>
+            
+            <div class="student-user">
+                <i class="fas fa-user-graduate"></i>
+                <span>{{ session.get('student_name', 'Student') }}</span>
+                <a href="{{ url_for('logout') }}" id="logoutBtn" class="logout-link" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <main class="student-container">
+        <div class="student-page-header">
+            <h1>My Profile</h1>
+            <p>View and manage your personal information</p>
+        </div>
+
+        <div class="profile-layout">
+            <div class="profile-card">
+                <div class="profile-avatar"><i class="fas fa-user-graduate"></i></div>
+                <h2>{{ student.name }}</h2>
+                <p class="profile-student-id">{{ student.student_id }}</p>
+                <div class="profile-stats">
+                    <div class="profile-stat"><div class="stat-value">{{ total_attendance }}</div><div class="stat-label">Total Attendance</div></div>
+                    <div class="profile-stat"><div class="stat-value">{{ attendance_rate }}%</div><div class="stat-label">Attendance Rate</div></div>
+                </div>
+            </div>
+
+            <div class="profile-form-card">
+                <h3><i class="fas fa-edit"></i> Personal Information</h3>
+                <form id="updateProfileForm" method="POST" action="{{ url_for('student_update_profile') }}">
+                    <div class="form-row">
+                        <div class="form-group"><label>Full Name</label><input type="text" name="name" value="{{ student.name }}" required></div>
+                        <div class="form-group"><label>Email Address</label><input type="email" name="email" value="{{ student.email }}" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Student ID</label><input type="text" value="{{ student.student_id }}" disabled><small class="disabled-note">Student ID cannot be changed</small></div>
+                        <div class="form-group"><label>Registration Number</label><input type="text" value="{{ student.registration_number }}" disabled><small class="disabled-note">Registration number cannot be changed</small></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Branch</label><input type="text" value="{{ student.branch }}" disabled></div>
+                        <div class="form-group"><label>Year of Admission</label><input type="text" value="{{ student.year_of_admission }}" disabled></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Residence</label><select name="residence"><option value="day_scholar" {% if student.residence == 'day_scholar' %}selected{% endif %}>Day Scholar</option><option value="hosteller" {% if student.residence == 'hosteller' %}selected{% endif %}>Hosteller</option></select></div>
+                        <div class="form-group"><label>&nbsp;</label><button type="submit" class="btn-update"><i class="fas fa-save"></i> Update Profile</button></div>
+                    </div>
+                </form>
+                
+                <div class="profile-divider"></div>
+                
+                <h3><i class="fas fa-key"></i> Change Password</h3>
+                <form id="changePasswordForm" method="POST" action="{{ url_for('student_change_password') }}">
+                    <div class="form-group"><label>Current Password</label><input type="password" name="current_password" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>New Password</label><input type="password" name="new_password" id="newPassword" required></div>
+                        <div class="form-group"><label>Confirm New Password</label><input type="password" name="confirm_password" id="confirmPassword" required></div>
+                    </div>
+                    <div id="passwordMatchError" class="error-message" style="display: none;"><i class="fas fa-exclamation-circle"></i> Passwords do not match</div>
+                    <button type="submit" class="btn-change-password" id="changePasswordBtn"><i class="fas fa-key"></i> Change Password</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="footer-note"><i class="fas fa-shield-alt"></i> Your information is secure and private</div>
+    </main>
+</body>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

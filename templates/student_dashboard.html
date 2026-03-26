@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<body class="student-body">
+    <header class="student-header">
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
+                <div class="logo-text">Hasteo</div>
+            </a>
+            
+            <nav class="student-nav">
+                <a href="{{ url_for('student_dashboard') }}" class="active">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="{{ url_for('student_attendance') }}">
+                    <i class="fas fa-calendar-check"></i> My Attendance
+                </a>
+                <a href="{{ url_for('student_profile') }}">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+            </nav>
+            
+            <div class="student-user">
+                <i class="fas fa-user-graduate"></i>
+                <span>{{ session.get('student_name', 'Student') }}</span>
+                <a href="{{ url_for('logout') }}" id="logoutBtn" class="logout-link" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="student-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="student-page-header">
+            <h1>Student Dashboard</h1>
+            <p>Track your attendance and bus schedule</p>
+        </div>
+
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <h2>Welcome back, <span class="highlight">{{ session.get('student_name', 'Student') }}</span></h2>
+                <p>{{ now.strftime('%A, %B %d, %Y') }}</p>
+            </div>
+            <div class="time-card">
+                <i class="fas fa-clock"></i>
+                <span id="liveTime">{{ now.strftime('%I:%M %p') }}</span>
+            </div>
+        </div>
+
+        <div class="student-info-card">
+            <div class="student-avatar">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div class="student-details">
+                <div class="detail-row"><span class="detail-label">Student ID:</span><span class="detail-value">{{ student.student_id }}</span></div>
+                <div class="detail-row"><span class="detail-label">Registration No:</span><span class="detail-value">{{ student.registration_number }}</span></div>
+                <div class="detail-row"><span class="detail-label">Branch:</span><span class="branch-badge branch-{{ student.branch|lower }}">{{ student.branch }}</span></div>
+                <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">{{ student.year_of_admission }}</span></div>
+                <div class="detail-row"><span class="detail-label">Residence:</span><span class="residence-badge {{ student.residence }}">{{ 'Day Scholar' if student.residence == 'day_scholar' else 'Hosteller' }}</span></div>
+                <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">{{ student.email }}</span></div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-calendar-check"></i><div class="stat-value">{{ total_attendance }}</div><div class="stat-label">Total Attendance</div></div>
+            <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-value">{{ attendance_rate }}%</div><div class="stat-label">Attendance Rate</div></div>
+            <div class="stat-card"><i class="fas fa-calendar-day"></i><div class="stat-value">{{ monthly_attendance }}</div><div class="stat-label">This Month</div></div>
+        </div>
+
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('student_attendance') }}" class="action-btn"><i class="fas fa-calendar-check"></i><span>View Attendance</span></a>
+                <a href="{{ url_for('student_profile') }}" class="action-btn"><i class="fas fa-user-edit"></i><span>Update Profile</span></a>
+                <a href="{{ url_for('scanner') }}" class="action-btn"><i class="fas fa-qrcode"></i><span>Scan ID Card</span></a>
+            </div>
+        </div>
+
+        <div class="recent-attendance">
+            <div class="section-header"><h3><i class="fas fa-history"></i> Recent Attendance</h3><a href="{{ url_for('student_attendance') }}" class="view-all">View All <i class="fas fa-arrow-right"></i></a></div>
+            <div class="table-responsive">
+                <table class="attendance-table">
+                    <thead>
+                        <tr><th>Date</th><th>Time</th><th>Bus</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_attendance %}
+                            {% for record in recent_attendance %}
+                            <tr>
+                                <td><strong>{{ record[0].strftime('%d %b, %Y') }}</strong></td>
+                                <td>{{ record[1].strftime('%I:%M %p') }}</td>
+                                <td>{{ record[2] }}</td>
+                                <td><span class="status-badge status-success"><i class="fas fa-check-circle"></i> Present</span></td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr class="empty-row"><td colspan="4"><div class="empty-state"><i class="fas fa-calendar-check"></i><p>No attendance records found</p></div></td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="info-card tips-card"><i class="fas fa-lightbulb"></i><h4>Quick Tips</h4><ul><li><i class="fas fa-check-circle"></i> Always carry your student ID card for scanning</li><li><i class="fas fa-check-circle"></i> Check your attendance regularly to ensure accuracy</li><li><i class="fas fa-check-circle"></i> Contact security if your ID is not scanning properly</li></ul></div>
+
+        <div class="footer-note"><i class="fas fa-graduation-cap"></i> Student portal - Track your attendance</div>
+    </main>
+</body>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+<script>
+    function updateLiveTime() {
+        const timeElement = document.querySelector('#liveTime');
+        if (timeElement) {
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+    setInterval(updateLiveTime, 60000);
+    updateLiveTime();
+</script>
+{% endblock %}

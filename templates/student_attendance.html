@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<body class="student-body">
+    <header class="student-header">
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
+                <div class="logo-text">Hasteo</div>
+            </a>
+            
+            <nav class="student-nav">
+                <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                <a href="{{ url_for('student_attendance') }}" class="active"><i class="fas fa-calendar-check"></i> My Attendance</a>
+                <a href="{{ url_for('student_profile') }}"><i class="fas fa-user"></i> Profile</a>
+            </nav>
+            
+            <div class="student-user">
+                <i class="fas fa-user-graduate"></i>
+                <span>{{ session.get('student_name', 'Student') }}</span>
+                <a href="{{ url_for('logout') }}" id="logoutBtn" class="logout-link" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <main class="student-container">
+        <div class="student-page-header">
+            <h1>My Attendance Records</h1>
+            <p>View and track your bus attendance history</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-calendar-check"></i><div class="stat-value">{{ total_attendance }}</div><div class="stat-label">Total Attendance</div></div>
+            <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-value">{{ attendance_rate }}%</div><div class="stat-label">Overall Rate</div></div>
+            <div class="stat-card"><i class="fas fa-calendar-week"></i><div class="stat-value">{{ weekly_attendance }}</div><div class="stat-label">This Week</div></div>
+            <div class="stat-card"><i class="fas fa-calendar-alt"></i><div class="stat-value">{{ monthly_attendance }}</div><div class="stat-label">This Month</div></div>
+        </div>
+
+        <div class="search-filters-section">
+            <div class="search-box"><i class="fas fa-search"></i><input type="text" id="attendanceSearch" placeholder="Search by date or bus..."></div>
+            <div class="filters">
+                <select id="filterMonth" class="filter-select"><option value="">All Months</option>{% for month in months %}<option value="{{ month.value }}">{{ month.name }}</option>{% endfor %}</select>
+                <select id="filterYear" class="filter-select"><option value="">All Years</option>{% for year in years %}<option value="{{ year }}">{{ year }}</option>{% endfor %}</select>
+                <button id="clearFilters" class="btn-clear-filters"><i class="fas fa-times"></i> Clear</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="attendance-table" id="attendanceTable">
+                <thead>
+                    <tr><th>Date</th><th>Time</th><th>Bus Number</th><th>Route</th><th>Status</th></tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                    {% if attendance_records %}
+                        {% for record in attendance_records %}
+                        <tr data-date="{{ record[0].strftime('%Y-%m-%d') }}" data-month="{{ record[0].strftime('%m') }}" data-year="{{ record[0].strftime('%Y') }}">
+                            <td><strong>{{ record[0].strftime('%d %b, %Y') }}</strong></td>
+                            <td>{{ record[1].strftime('%I:%M %p') }}</td>
+                            <td>{{ record[2] }}</td>
+                            <td>{{ record[3] }}</td>
+                            <td><span class="status-badge status-success"><i class="fas fa-check-circle"></i> Present</span></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="empty-row"><td colspan="5"><div class="empty-state"><i class="fas fa-calendar-check"></i><p>No attendance records found</p></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if current_page > 1 %}<a href="{{ url_for('student_attendance', page=current_page-1) }}" class="page-link"><i class="fas fa-chevron-left"></i> Previous</a>{% endif %}
+            {% for p in range(1, total_pages + 1) %}{% if p == current_page %}<span class="page-link active">{{ p }}</span>{% elif p <= current_page + 2 and p >= current_page - 2 %}<a href="{{ url_for('student_attendance', page=p) }}" class="page-link">{{ p }}</a>{% endif %}{% endfor %}
+            {% if current_page < total_pages %}<a href="{{ url_for('student_attendance', page=current_page+1) }}" class="page-link">Next <i class="fas fa-chevron-right"></i></a>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="footer-note"><i class="fas fa-info-circle"></i> Attendance records are updated in real-time when you scan your ID</div>
+    </main>
+</body>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

@@ -1,7 +1,7 @@
-// admin.js - Hasteo Admin Dashboard JavaScript
+// admin.js - Hasteo Admin Dashboard JavaScript - FIXED DELETE FUNCTIONS
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin JS loaded - Fixed delete functionality'); // Debug log
+    console.log('Admin JS loaded - Fixed delete functionality');
     
     initAdminDashboard();
     initUserManagement();
@@ -10,17 +10,21 @@ document.addEventListener('DOMContentLoaded', function() {
     initModals();
     initSearchAndFilters();
     
+    // Initialize delete buttons immediately
+    initDeleteButtons();
+    
     // Re-attach delete button listeners after any dynamic content changes
     observeDOMChanges();
-    
-    // Directly initialize delete buttons on page load
-    setTimeout(() => {
-        initStudentDeleteButtons();
-        initSecurityDeleteButtons();
-        initBusDeleteButtons();
-        initBatchDelete();
-    }, 500);
 });
+
+// Initialize all delete buttons
+function initDeleteButtons() {
+    console.log('Initializing delete buttons');
+    initStudentDeleteButtons();
+    initSecurityDeleteButtons();
+    initBusDeleteButtons();
+    initBatchDelete();
+}
 
 // Observe DOM changes to re-attach event listeners
 function observeDOMChanges() {
@@ -87,7 +91,7 @@ function initUserManagement() {
     initTabs();
     initAddStudentForm();
     initAddSecurityForm();
-    initStudentDeleteButtons(); // Make sure this is called
+    initStudentDeleteButtons();
     initSecurityDeleteButtons();
     initStudentEditButtons();
     initBatchDelete();
@@ -261,7 +265,7 @@ function showNoResults(tableId, visibleCount) {
             tr.innerHTML = `<td colspan="8" style="text-align: center; padding: 40px;">
                 <i class="fas fa-search" style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px; display: block; color: #ff2d75;"></i>
                 <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">No records match your search criteria</p>
-            </td>`;
+             </td>`;
             tbody.appendChild(tr);
         }
     } else {
@@ -315,10 +319,11 @@ function initAddStudentForm() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification(data.message, 'success');
+                // Show success message with the password (registration number)
+                showNotification(`${data.message}`, 'success');
                 form.reset();
                 // Reload the page to show new student
-                setTimeout(() => location.reload(), 1500);
+                setTimeout(() => location.reload(), 2000);
             } else {
                 showNotification(data.error || 'Error adding student', 'error');
             }
@@ -419,7 +424,7 @@ function initAddBusForm() {
 // Delete Student - FIXED VERSION
 function initStudentDeleteButtons() {
     const deleteButtons = document.querySelectorAll('.btn-delete-student');
-    console.log('Found student delete buttons:', deleteButtons.length); // Debug log
+    console.log('Found student delete buttons:', deleteButtons.length);
     
     deleteButtons.forEach(btn => {
         // Remove any existing listeners to prevent duplicates
@@ -437,7 +442,7 @@ function handleStudentDelete(e) {
     const row = btn.closest('tr');
     const studentName = row?.cells[1]?.textContent || 'Student';
     
-    console.log('Delete student clicked:', studentId); // Debug log
+    console.log('Delete student clicked:', studentId);
     
     showDeleteConfirmation(
         `Are you sure you want to delete ${studentName}?`,
@@ -451,6 +456,8 @@ function handleStudentDelete(e) {
                     showNotification(data.message, 'success');
                     if (row) row.remove();
                     closeModal();
+                    // Update student count if needed
+                    updateStudentCount();
                 } else {
                     showNotification(data.error || 'Error deleting student', 'error');
                 }
@@ -466,7 +473,7 @@ function handleStudentDelete(e) {
 // Delete Security - FIXED VERSION
 function initSecurityDeleteButtons() {
     const deleteButtons = document.querySelectorAll('.btn-delete-security');
-    console.log('Found security delete buttons:', deleteButtons.length); // Debug log
+    console.log('Found security delete buttons:', deleteButtons.length);
     
     deleteButtons.forEach(btn => {
         btn.removeEventListener('click', handleSecurityDelete);
@@ -483,7 +490,7 @@ function handleSecurityDelete(e) {
     const row = btn.closest('tr');
     const securityName = row?.cells[1]?.textContent || 'Security personnel';
     
-    console.log('Delete security clicked:', securityId); // Debug log
+    console.log('Delete security clicked:', securityId);
     
     showDeleteConfirmation(
         `Are you sure you want to delete ${securityName}?`,
@@ -497,6 +504,8 @@ function handleSecurityDelete(e) {
                     showNotification(data.message, 'success');
                     if (row) row.remove();
                     closeModal();
+                    // Update security count if needed
+                    updateSecurityCount();
                 } else {
                     showNotification(data.error || 'Error deleting security', 'error');
                 }
@@ -512,7 +521,7 @@ function handleSecurityDelete(e) {
 // Delete Bus - FIXED VERSION
 function initBusDeleteButtons() {
     const deleteButtons = document.querySelectorAll('.btn-delete-bus');
-    console.log('Found bus delete buttons:', deleteButtons.length); // Debug log
+    console.log('Found bus delete buttons:', deleteButtons.length);
     
     deleteButtons.forEach(btn => {
         btn.removeEventListener('click', handleBusDelete);
@@ -529,7 +538,7 @@ function handleBusDelete(e) {
     const row = btn.closest('tr');
     const busNumber = row?.cells[0]?.textContent || 'Bus';
     
-    console.log('Delete bus clicked:', busId); // Debug log
+    console.log('Delete bus clicked:', busId);
     
     showDeleteConfirmation(
         `Are you sure you want to delete bus ${busNumber}?`,
@@ -543,6 +552,8 @@ function handleBusDelete(e) {
                     showNotification(data.message, 'success');
                     if (row) row.remove();
                     closeModal();
+                    // Update bus count if needed
+                    updateBusCount();
                 } else {
                     showNotification(data.error || 'Error deleting bus', 'error');
                 }
@@ -553,6 +564,46 @@ function handleBusDelete(e) {
             });
         }
     );
+}
+
+// Update counts after deletion
+function updateStudentCount() {
+    const remainingRows = document.querySelectorAll('#studentsTableBody tr:not([id*="no"])').length;
+    const studentStat = document.querySelector('.stat-card:first-child .stat-value');
+    if (studentStat) {
+        studentStat.textContent = remainingRows;
+    }
+    // Update tab button count
+    const studentsTabBtn = document.querySelector('.tab-btn[data-tab="students"]');
+    if (studentsTabBtn) {
+        studentsTabBtn.innerHTML = `<i class="fas fa-user-graduate"></i> Students (${remainingRows})`;
+    }
+}
+
+function updateSecurityCount() {
+    const remainingRows = document.querySelectorAll('#securityTableBody tr:not([id*="no"])').length;
+    const securityStat = document.querySelector('.stat-card:nth-child(2) .stat-value');
+    if (securityStat) {
+        securityStat.textContent = remainingRows;
+    }
+    // Update tab button count
+    const securityTabBtn = document.querySelector('.tab-btn[data-tab="security"]');
+    if (securityTabBtn) {
+        securityTabBtn.innerHTML = `<i class="fas fa-shield-alt"></i> Security (${remainingRows})`;
+    }
+}
+
+function updateBusCount() {
+    const remainingRows = document.querySelectorAll('#busesTableBody tr:not([id*="no"])').length;
+    const busStats = document.querySelectorAll('.stats-grid .stat-value');
+    if (busStats[0]) {
+        busStats[0].textContent = remainingRows;
+    }
+    // Update active buses count
+    const activeRows = document.querySelectorAll('#busesTableBody tr:not([id*="no"]) .status-active').length;
+    if (busStats[1]) {
+        busStats[1].textContent = activeRows;
+    }
 }
 
 // Edit Student
@@ -720,7 +771,8 @@ function initBatchDelete() {
                         if (data.success) {
                             showNotification(data.message, 'success');
                             // Remove the batch item
-                            document.querySelector(`.batch-item[data-year="${year}"]`).remove();
+                            const batchItem = document.querySelector(`.batch-item[data-year="${year}"]`);
+                            if (batchItem) batchItem.remove();
                             // Reload after a delay
                             setTimeout(() => location.reload(), 1500);
                         } else {
@@ -746,13 +798,14 @@ function showDeleteConfirmation(message, callback) {
     
     if (!modal || !messageEl) return;
     
-    console.log('Showing delete confirmation'); // Debug log
+    console.log('Showing delete confirmation');
     
     messageEl.textContent = message;
     deleteCallback = callback;
     
     modal.classList.add('active');
-    modal.style.display = 'flex'; // Ensure modal is visible
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
 }
 
 // Modal handling
@@ -783,6 +836,7 @@ function initModals() {
             if (deleteCallback) {
                 deleteCallback();
             }
+            closeModal();
         });
     }
 }
@@ -790,15 +844,20 @@ function initModals() {
 function closeModal() {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('active');
-        modal.style.display = 'none'; // Hide modal
+        modal.style.display = 'none';
     });
     deleteCallback = null;
+    document.body.style.overflow = ''; // Restore scrolling
 }
 
 // Notification system
 function showNotification(message, type = 'info') {
-    const container = document.querySelector('.flash-messages');
-    if (!container) return;
+    let container = document.querySelector('.flash-messages');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'flash-messages';
+        document.body.appendChild(container);
+    }
     
     const notification = document.createElement('div');
     notification.className = `flash-message ${type}`;
@@ -849,6 +908,10 @@ function initFlashMessages() {
         setTimeout(() => {
             hideFlashMessage(message);
         }, 3000);
+        
+        message.addEventListener('click', () => {
+            hideFlashMessage(message);
+        });
     });
 }
 

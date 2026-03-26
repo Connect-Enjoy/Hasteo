@@ -18,7 +18,7 @@
             
             <nav class="security-nav">
                 <a href="{{ url_for('security_dashboard') }}" class="active">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <i class="fas fa-chart-pie"></i> Dashboard
                 </a>
                 <a href="{{ url_for('security_bus_logs') }}">
                     <i class="fas fa-bus"></i> Bus Logs
@@ -60,55 +60,94 @@
 
         <div class="security-page-header">
             <h1>Security Dashboard</h1>
-            <p>Welcome back, {{ session.get('security_name', 'Security Officer') }}!</p>
+            <p>Manage bus operations and student attendance efficiently</p>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <h2>Welcome back, <span class="highlight">{{ session.get('security_name', 'Officer') }}</span></h2>
+                <p>{{ now.strftime('%A, %B %d, %Y') }}</p>
+            </div>
+            <div class="time-card">
                 <i class="fas fa-clock"></i>
-                <div class="stat-value">{{ now.strftime('%I:%M %p') }}</div>
-                <div class="stat-label">Current Time</div>
+                <span id="liveTime">{{ now.strftime('%I:%M %p') }}</span>
             </div>
-            <div class="stat-card">
-                <i class="fas fa-calendar-day"></i>
-                <div class="stat-value">{{ now.strftime('%d %b, %Y') }}</div>
-                <div class="stat-label">Today's Date</div>
-            </div>
+        </div>
+
+        <div class="stats-grid">
             <div class="stat-card">
                 <i class="fas fa-hourglass-half"></i>
                 <div class="stat-value">{{ pending_bus_logs }}</div>
-                <div class="stat-label">Pending Bus Logs</div>
+                <div class="stat-label">Active Trips</div>
+                <div class="stat-trend">
+                    <i class="fas fa-bus"></i> Pending logs
+                </div>
             </div>
+            
             <div class="stat-card">
                 <i class="fas fa-qrcode"></i>
                 <div class="stat-value">{{ today_scans }}</div>
                 <div class="stat-label">Today's Scans</div>
+                <div class="stat-trend">
+                    <i class="fas fa-user-check"></i> Students scanned
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-value" id="completedTrips">0</div>
+                <div class="stat-label">Completed Trips</div>
+                <div class="stat-trend">
+                    <i class="fas fa-flag-checkered"></i> Today
+                </div>
             </div>
         </div>
 
-        <!-- Main Options -->
-        <div class="dashboard-grid">
-            <a href="{{ url_for('security_bus_logs') }}" class="dashboard-card">
-                <i class="fas fa-bus"></i>
-                <h3>Bus Logs</h3>
-                <p>Record bus entry and exit times. Track bus movements throughout the day.</p>
-                {% if pending_bus_logs > 0 %}
-                <span class="card-badge">{{ pending_bus_logs }} Pending</span>
-                {% endif %}
-            </a>
-
-            <a href="{{ url_for('security_student_logs') }}" class="dashboard-card">
-                <i class="fas fa-users"></i>
-                <h3>Student Logs</h3>
-                <p>Scan student IDs, verify details, and record attendance for each bus.</p>
-                {% if today_scans > 0 %}
-                <span class="card-badge">{{ today_scans }} Scans Today</span>
-                {% endif %}
-            </a>
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('security_bus_logs') }}" class="action-btn">
+                    <i class="fas fa-bus"></i>
+                    <span>Manage Buses</span>
+                </a>
+                <a href="{{ url_for('security_student_logs') }}" class="action-btn">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Scan Students</span>
+                </a>
+            </div>
         </div>
 
-        <!-- Footer Note -->
+        <div class="info-grid">
+            <div class="info-card">
+                <i class="fas fa-info-circle"></i>
+                <h4>Quick Tips</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Record bus entry before scanning students</li>
+                    <li><i class="fas fa-check-circle"></i> Use the barcode scanner for quick ID verification</li>
+                    <li><i class="fas fa-check-circle"></i> Complete trips after all students have boarded</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <i class="fas fa-chart-line"></i>
+                <h4>Today's Summary</h4>
+                <div class="summary-stats">
+                    <div class="summary-item">
+                        <span class="summary-label">Active Buses</span>
+                        <span class="summary-value" id="activeBusesCount">--</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Scans This Hour</span>
+                        <span class="summary-value" id="hourlyScans">--</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Completion Rate</span>
+                        <span class="summary-value" id="completionRate">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="footer-note">
             <i class="fas fa-shield-alt"></i> Security personnel access only
         </div>
@@ -118,5 +157,35 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/security.js') }}"></script>
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    function updateLiveTime() {
+        const timeElement = document.querySelector('#liveTime');
+        if (timeElement) {
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+    setInterval(updateLiveTime, 60000);
+    updateLiveTime();
+    
+    async function loadDashboardStats() {
+        try {
+            const response = await fetch('/api/security/dashboard-stats');
+            const data = await response.json();
+            if (data.success) {
+                if (document.getElementById('activeBusesCount')) document.getElementById('activeBusesCount').textContent = data.active_buses || 0;
+                if (document.getElementById('hourlyScans')) document.getElementById('hourlyScans').textContent = data.hourly_scans || 0;
+                if (document.getElementById('completionRate')) document.getElementById('completionRate').textContent = `${data.completion_rate || 0}%`;
+                if (document.getElementById('completedTrips')) document.getElementById('completedTrips').textContent = data.completed_trips || 0;
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+    
+    if (document.getElementById('activeBusesCount')) {
+        loadDashboardStats();
+        setInterval(loadDashboardStats, 30000);
+    }
+</script>
 {% endblock %}
