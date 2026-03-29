@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Payment - Hasteo{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body {
+    background: #f4f6f8;
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  .payment-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .payment-card {
+    background: #fff;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .payment-header {
+    background: #0f0f1e;
+    color: #fff;
+    padding: 30px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .payment-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  .payment-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-top: 10px;
+    color: #34d399;
+  }
+  .payment-body {
+    padding: 30px;
+  }
+  .payment-methods {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+  .method {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.2s;
+  }
+  .method.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+    color: #3b82f6;
+  }
+  .mock-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-family: 'Outfit', sans-serif;
+    outline: none;
+  }
+  .mock-input:focus {
+    border-color: #3b82f6;
+  }
+  .pay-btn {
+    width: 100%;
+    padding: 16px;
+    background: #10b981;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .pay-btn:hover {
+    background: #059669;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-wrapper">
+  <div class="payment-card">
+    <div class="payment-header">
+      <div style="opacity: 0.8; font-size: 0.9rem;">Hasteo Bus Pass</div>
+      <h2>One-Day Transit</h2>
+      <div class="payment-amount">₹150.00</div>
+      <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.7;">Bus: {{ bus_number }}</div>
+    </div>
+    
+    <div class="payment-body">
+      <div class="payment-methods">
+        <div class="method active" id="methodUPI">
+          <i class="fas fa-qrcode"></i> UPI
+        </div>
+        <div class="method" id="methodCard">
+          <i class="fas fa-credit-card"></i> Card
+        </div>
+      </div>
+      
+      <div id="upiForm">
+        <input type="text" class="mock-input" placeholder="Enter UPI ID (e.g. 9876543210@ybl)" value="student@college">
+      </div>
+      
+      <div id="cardForm" style="display: none;">
+        <input type="text" class="mock-input" placeholder="Card Number" value="4111 1111 1111 1111">
+        <div style="display: flex; gap: 15px;">
+          <input type="text" class="mock-input" placeholder="MM/YY" value="12/26">
+          <input type="text" class="mock-input" placeholder="CVV" value="123">
+        </div>
+      </div>
+      
+      <form action="{{ url_for('process_payment') }}" method="POST">
+        <input type="hidden" name="bus_id" value="{{ bus_id }}">
+        <input type="hidden" name="bus_number" value="{{ bus_number }}">
+        <button type="submit" class="pay-btn" onclick="this.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Processing...'">
+          <i class="fas fa-lock"></i> Pay Securely
+        </button>
+      </form>
+      
+      <div style="text-align: center; margin-top: 20px; color: #94a3b8; font-size: 0.8rem;">
+        <i class="fas fa-shield-alt"></i> Dummy Payment Gateway
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('methodUPI').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('methodCard').classList.remove('active');
+    document.getElementById('upiForm').style.display = 'block';
+    document.getElementById('cardForm').style.display = 'none';
+  });
+  
+  document.getElementById('methodCard').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('methodUPI').classList.remove('active');
+    document.getElementById('cardForm').style.display = 'block';
+    document.getElementById('upiForm').style.display = 'none';
+  });
+</script>
+{% endblock %}

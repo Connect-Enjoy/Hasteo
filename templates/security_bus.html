@@ -18,7 +18,7 @@
             
             <nav class="security-nav">
                 <a href="{{ url_for('security_dashboard') }}">
-                    <i class="fas fa-chart-pie"></i> Dashboard
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
                 <a href="{{ url_for('security_bus_logs') }}" class="active">
                     <i class="fas fa-bus"></i> Bus Logs
@@ -42,128 +42,99 @@
         <div class="flash-messages"></div>
 
         <div class="security-page-header">
-            <h1><i class="fas fa-bus"></i> Bus Logs</h1>
-            <p>Record and manage bus trips throughout the day</p>
+            <h1>Bus Logs</h1>
+            <p>Record entry and exit times for buses</p>
         </div>
 
-        <div class="bus-logs-layout">
-            <div class="buses-section">
-                <div class="section-header">
-                    <h3><i class="fas fa-bus"></i> Active Buses</h3>
-                    <span class="section-count">{{ active_buses|length }}</span>
-                </div>
+        <div class="bus-logs-container">
+            <!-- Left Column: Active Buses -->
+            <div class="bus-list">
+                <h3><i class="fas fa-bus"></i> Active Buses</h3>
                 
-                <div class="buses-grid">
-                    {% if active_buses %}
-                        {% for bus in active_buses %}
-                        <div class="bus-card" data-bus-id="{{ bus[0] }}">
-                            <div class="bus-card-header">
-                                <div class="bus-number">{{ bus[1] }}</div>
-                                <div class="bus-status">Active</div>
-                            </div>
-                            <div class="bus-card-body">
-                                <div class="bus-route">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ bus[2] }}</span>
-                                </div>
-                                <div class="bus-driver">
-                                    <i class="fas fa-user"></i>
-                                    <span>{{ bus[3] }}</span>
-                                </div>
-                            </div>
-                            <div class="bus-card-footer">
-                                <button class="btn-record-entry" data-bus-id="{{ bus[0] }}">
-                                    <i class="fas fa-sign-in-alt"></i> Record Entry
-                                </button>
-                            </div>
+                {% if active_buses %}
+                    {% for bus in active_buses %}
+                    <div class="bus-item" data-bus-id="{{ bus[0] }}">
+                        <div class="bus-info">
+                            <h4>{{ bus[1] }} - {{ bus[2] }}</h4>
+                            <p>Driver: {{ bus[3] }}</p>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-bus"></i>
-                            <p>No active buses available</p>
-                            <small>Contact admin to add buses</small>
+                        <div class="bus-actions">
+                            <button class="btn-entry">
+                                <i class="fas fa-sign-in-alt"></i> Entry
+                            </button>
                         </div>
-                    {% endif %}
-                </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: rgba(255, 255, 255, 0.7); text-align: center; padding: 20px;">
+                        No active buses available
+                    </p>
+                {% endif %}
             </div>
 
-            <div class="logs-section">
-                <div class="section-header">
-                    <h3><i class="fas fa-history"></i> Today's Trips</h3>
-                    <span class="section-count" id="logsCount">{{ today_logs|length }}</span>
-                </div>
+            <!-- Right Column: Today's Logs -->
+            <div class="bus-list">
+                <h3><i class="fas fa-history"></i> Today's Logs</h3>
                 
-                <div class="logs-container" id="todayLogs">
+                <div id="todayLogs">
                     {% if today_logs %}
                         {% for log in today_logs %}
-                        <div class="log-card" data-log-id="{{ log[0] }}">
-                            <div class="log-card-header">
-                                <div class="log-bus-info">
-                                    <i class="fas fa-bus"></i>
-                                    <strong>{{ log[1] }}</strong>
-                                </div>
-                                <div class="log-status status-{{ log[4] }}">
-                                    <i class="fas {% if log[4] == 'pending' %}fa-hourglass-half{% elif log[4] == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
-                                    {{ log[4]|capitalize }}
-                                </div>
+                        <div class="log-item" data-log-id="{{ log[0] }}">
+                            <div class="log-header">
+                                <strong style="color: white;">{{ log[1] }}</strong>
+                                <span class="log-status status-{{ log[4] }}">{{ log[4]|capitalize }}</span>
                             </div>
-                            
-                            <div class="log-card-body">
-                                <div class="log-time-item">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                    <span>Entry: {{ log[2].strftime('%I:%M %p') if log[2] else '--:--' }}</span>
-                                </div>
-                                <div class="log-time-item">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Exit: {{ log[3].strftime('%I:%M %p') if log[3] else 'Not recorded' }}</span>
-                                </div>
+                            <div class="log-time">
+                                <span><i class="fas fa-sign-in-alt"></i> Entry: {{ log[2].strftime('%I:%M %p') if log[2] else '--:--' }}</span>
+                                <span><i class="fas fa-sign-out-alt"></i> Exit: {{ log[3].strftime('%I:%M %p') if log[3] else '--:--' }}</span>
                             </div>
-                            
                             {% if log[4] == 'pending' %}
-                            <div class="log-card-footer">
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
                                 {% if not log[3] %}
-                                <button class="btn-exit-trip" data-log-id="{{ log[0] }}">
+                                <button class="btn-exit">
                                     <i class="fas fa-sign-out-alt"></i> Record Exit
                                 </button>
                                 {% endif %}
                                 {% if log[2] and log[3] %}
-                                <button class="btn-complete-trip" data-log-id="{{ log[0] }}">
-                                    <i class="fas fa-check"></i> Complete Trip
+                                <button class="btn-complete">
+                                    <i class="fas fa-check"></i> Complete
                                 </button>
                                 {% endif %}
-                                <button class="btn-delete-log" data-log-id="{{ log[0] }}">
-                                    <i class="fas fa-trash-alt"></i> Delete
+                                <button class="btn-delete-log">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                             {% endif %}
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-day"></i>
-                            <p>No trips recorded for today</p>
-                            <small>Record a bus entry to start a new trip</small>
-                        </div>
+                        <p style="color: rgba(255, 255, 255, 0.7); text-align: center; padding: 20px;">
+                            No logs for today
+                        </p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h3>
+                <h3><i class="fas fa-exclamation-triangle" style="color: #f44336;"></i> Confirm Delete</h3>
                 <button class="modal-close">&times;</button>
             </div>
-            <div class="modal-body">
-                <p id="deleteConfirmMessage">Are you sure you want to delete this trip log?</p>
-                <div class="delete-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel">Cancel</button>
-                <button type="button" id="confirmDeleteBtn" class="btn-danger">Delete</button>
+            
+            <div class="delete-confirm-content">
+                <p id="deleteConfirmMessage">Are you sure you want to delete this log?</p>
+                <p class="delete-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</p>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-add modal-cancel">Cancel</button>
+                    <button type="button" id="confirmDeleteBtn" class="btn-add" style="background: #f44336;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -172,9 +143,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/security.js') }}"></script>
-<script>
-    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    });
-</script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% endblock %}

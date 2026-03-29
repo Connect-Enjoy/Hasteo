@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}One Day Pass - Hasteo{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  .pass-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: rgba(15, 15, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+  }
+  .pass-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .pass-header i {
+    font-size: 3rem;
+    color: #f59e0b;
+    margin-bottom: 15px;
+  }
+  .pass-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+  .pass-details {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  .pass-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .pass-row:last-child {
+    border-bottom: none;
+  }
+  .pass-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+  }
+  .pass-value {
+    font-weight: 700;
+  }
+  .bus-select {
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 25px;
+  }
+  .bus-select option {
+    background: #0f0f1e;
+    color: #fff;
+  }
+  .continue-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .continue-btn:hover {
+    transform: translateY(-2px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="student-dashboard" style="min-height: 100vh;">
+  <!-- Animated Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="stars-container" id="starsContainer"></div>
+
+  <div class="sd-wrapper">
+    <nav class="sd-navbar">
+      <a href="{{ url_for('student_dashboard') }}" class="sd-logo" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-arrow-left"></i>
+        <span class="sd-logo-text" style="font-size: 1.2rem;">Back to Dashboard</span>
+      </a>
+    </nav>
+
+    <div class="pass-container">
+      <div class="pass-header">
+        <i class="fas fa-ticket-alt"></i>
+        <h2>Hosteller One-Day Pass</h2>
+        <p style="color: rgba(255,255,255,0.6); margin-top: 8px;">Valid for today only. Covers to and fro travel.</p>
+      </div>
+
+      <div class="pass-details">
+        <div class="pass-row">
+          <span class="pass-label">Student Name</span>
+          <span class="pass-value">{{ session.get('student_name') }}</span>
+        </div>
+        <div class="pass-row">
+          <span class="pass-label">Pass Type</span>
+          <span class="pass-value">1-Day Transit</span>
+        </div>
+        <div class="pass-row">
+          <span class="pass-label">Cost</span>
+          <span class="pass-value" style="color: #34d399;">₹150.00</span>
+        </div>
+      </div>
+
+      <form action="{{ url_for('dummy_payment') }}" method="POST">
+        <label for="bus_selection" style="display: block; margin-bottom: 10px; font-weight: 500;">Select Destination Bus Route</label>
+        <select id="bus_selection" class="bus-select" required onchange="updateBusInfo(this)">
+          <option value="" disabled selected>-- Choose a Bus --</option>
+          {% for bus in buses %}
+            <option value="{{ bus[0] }}" data-number="{{ bus[1] }}">Bus {{ bus[1] }} ({{ bus[2] }})</option>
+          {% endfor %}
+        </select>
+        
+        <input type="hidden" name="bus_id" id="hidden_bus_id">
+        <input type="hidden" name="bus_number" id="hidden_bus_number">
+
+        <button type="submit" class="continue-btn" id="payBtn" disabled style="opacity: 0.5;">
+          Proceed to Payment — ₹150
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateBusInfo(select) {
+    const option = select.options[select.selectedIndex];
+    if (option.value) {
+      document.getElementById('hidden_bus_id').value = option.value;
+      document.getElementById('hidden_bus_number').value = option.getAttribute('data-number');
+      const btn = document.getElementById('payBtn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+
+  // Generate stars
+  const starsContainer = document.getElementById('starsContainer');
+  if (starsContainer) {
+    for (let i = 0; i < 50; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.width = (Math.random() * 2 + 1) + 'px';
+        star.style.height = star.style.width;
+        star.style.animationDelay = (Math.random() * 3) + 's';
+        starsContainer.appendChild(star);
+    }
+  }
+</script>
+{% endblock %}

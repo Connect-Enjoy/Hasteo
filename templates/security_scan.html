@@ -3,93 +3,91 @@
 {% block title %}Security Scanner - Hasteo{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="security-body" style="min-height: 100vh;">
-    <header class="security-header">
-        <div class="container header-container">
-            <a href="{{ url_for('index') }}" class="logo-container">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
-                <div class="logo-text">Hasteo</div>
+<div class="scanner-minimal">
+    <!-- Header with Bus Info -->
+    <div class="scanner-header-minimal">
+        <div class="container header-content-minimal">
+            <a href="{{ url_for('security_student_logs') }}" class="back-btn-minimal">
+                <i class="fas fa-arrow-left"></i> Back to Logs
             </a>
-            
-            <nav class="security-nav">
-                <a href="{{ url_for('security_dashboard') }}">
-                    <i class="fas fa-chart-pie"></i> Dashboard
-                </a>
-                <a href="{{ url_for('security_bus_logs') }}">
-                    <i class="fas fa-bus"></i> Bus Logs
-                </a>
-                <a href="{{ url_for('security_student_logs') }}" class="active">
-                    <i class="fas fa-users"></i> Student Logs
-                </a>
-            </nav>
-            
-            <div class="security-user">
-                <i class="fas fa-shield-alt"></i>
-                <span>{{ session.get('security_name', 'Security') }}</span>
-                <a href="{{ url_for('security_logout') }}" id="logoutBtn" class="logout-link" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <div class="scanner-container" style="padding: 20px;">
-        <div class="bus-info-banner" style="background: var(--glass-bg); border-radius: var(--radius-lg); padding: 15px 20px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <i class="fas fa-bus" style="font-size: 1.5rem; color: var(--bg-pink);"></i>
-                <div>
-                    <div style="font-weight: 700;">{{ bus[1] }}</div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary);">{{ bus[2] }}</div>
-                </div>
-                <div style="margin-left: auto;"><i class="fas fa-camera"></i> Scanning Mode</div>
-            </div>
-        </div>
-
-        {% if not has_pending_log %}
-        <div style="background: rgba(244, 67, 54, 0.1); border-left: 3px solid var(--danger); padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 20px;">
-            <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> No active trip for this bus. Please record entry first.
-            <a href="{{ url_for('security_bus_logs') }}" style="color: var(--bg-pink); margin-left: 10px;">Go to Bus Logs</a>
-        </div>
-        {% endif %}
-
-        <div class="scanner-viewport" style="position: relative; margin-bottom: 20px;">
-            <div class="camera-placeholder" id="cameraPlaceholder" style="background: rgba(0,0,0,0.3); border-radius: var(--radius-lg); padding: 40px; text-align: center;">
-                <i class="fas fa-camera" style="font-size: 2rem;"></i>
-                <p>Requesting camera access...</p>
-            </div>
-            <div class="camera-wrapper" id="cameraWrapper" style="display: none;">
-                <div id="scannerContainer"></div>
-            </div>
-        </div>
-
-        <div class="results-panel" style="background: var(--glass-bg); border-radius: var(--radius-lg); padding: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <div><i class="fas fa-users"></i> Scanned Students <span id="scanCount" style="background: var(--bg-pink); padding: 2px 8px; border-radius: 20px; margin-left: 8px;">0</span></div>
-                <div id="lastScanTime"><i class="far fa-clock"></i> --:--</div>
-            </div>
-            <div id="resultsList" style="max-height: 300px; overflow-y: auto;">
-                <div class="empty-state"><i class="fas fa-qrcode"></i><p>Align student ID card within the frame</p></div>
-            </div>
-            <div style="margin-top: 20px; text-align: center;">
-                <a href="{{ url_for('security_student_logs') }}" class="btn-scan" style="display: inline-flex; background: var(--bg-pink); padding: 10px 25px; border-radius: 999px; color: white; text-decoration: none;">
-                    <i class="fas fa-check-circle"></i> Finish Scanning
-                </a>
-            </div>
+            <div class="scanner-title-minimal">Security Scanner</div>
+            <div class="header-spacer"></div>
         </div>
     </div>
 
-    <input type="hidden" id="busId" value="{{ bus[0] }}">
-    <input type="hidden" id="busNumber" value="{{ bus[1] }}">
+    <!-- Enhanced Bus Information -->
+    <div class="bus-info-bar">
+        <i class="fas fa-bus"></i>
+        <span>{{ bus[1] }} - {{ bus[2] }}</span>
+        <small><i class="fas fa-qrcode"></i> Scanning Mode</small>
+    </div>
+
+    <!-- Scanner Viewport -->
+    <div class="scanner-body">
+        <div class="scanner-viewport">
+            <!-- Camera Placeholder -->
+            <div class="camera-placeholder">
+                <i class="fas fa-camera"></i>
+                <p>Requesting camera access...<br><small>Please allow camera permission</small></p>
+            </div>
+            
+            <!-- Camera Wrapper -->
+            <div class="camera-wrapper" style="display: none;">
+                <div id="scannerContainer"></div>
+                <div class="scan-frame-overlay"></div>
+            </div>
+            
+            <!-- Scanner Status -->
+            <div class="scanner-status-minimal" id="scannerStatus">
+                <i class="fas fa-video"></i> <span>Initializing scanner...</span>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <div class="results-header">
+                <div class="results-title">
+                    <i class="fas fa-users"></i> Scanned Students
+                    <div class="scan-count" id="scanCount">0</div>
+                </div>
+                <div class="result-time-minimal" id="lastScanTime">
+                    <i class="far fa-clock"></i> --
+                </div>
+            </div>
+            
+            <div class="results-list" id="resultsList">
+                <div class="no-results">
+                    <i class="fas fa-qrcode"></i>
+                    <p>Align student ID card within the frame</p>
+                    <small class="no-results-hint">Hold steady for quick scan</small>
+                </div>
+            </div>
+            
+            <!-- Finish Scan Button -->
+            <div class="scanner-footer">
+                <a href="{{ url_for('security_student_logs') }}" class="finish-scan-btn">
+                    <i class="fas fa-check-circle"></i> Finish Scanning
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <p class="scanner-footer-note">
+                    <i class="fas fa-info-circle"></i> All scanned data will be saved automatically
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<input type="hidden" id="busId" value="{{ bus[0] }}">
+<input type="hidden" id="busNumber" value="{{ bus[1] }}">
 {% endblock %}
 
 {% block scripts %}
+<!-- Load QuaggaJS for barcode scanning -->
 <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
 <script src="{{ url_for('static', filename='js/security.js') }}"></script>

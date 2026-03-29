@@ -1,11 +1,23 @@
 :root {
-  --bg-purple: #2a0f5f;
-  --bg-blue: #1a5cff;
-  --bg-pink: #ff2d75;
-  --glass-bg: rgba(255,255,255,0.05);
-  --glass-border: rgba(255,255,255,0.08);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255,255,255,0.7);
+  --accent-purple: #7c3aed;
+  --accent-blue: #2563eb;
+  --accent-pink: #ec4899;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  
+  --bg-purple: var(--accent-purple);
+  --bg-blue: var(--accent-blue);
+  --bg-pink: var(--accent-pink);
+  
+  --glass-bg: rgba(15, 15, 30, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.15);
+  
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-sm: 12px;
@@ -65,19 +77,26 @@ html {
 body {
   overflow-y: scroll;
   scrollbar-gutter: stable both-edges;
-  background: linear-gradient(135deg, var(--bg-purple), var(--bg-blue), var(--bg-pink));
-  background-size: 300% 300%;
-  animation: gradientMove 12s ease infinite;
+  background: #050510;
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   margin: 0;
   min-height: 100vh;
+  position: relative;
 }
 
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .container {
@@ -94,14 +113,16 @@ header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  backdrop-filter: blur(0px);
+  background: rgba(10, 10, 25, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: backdrop-filter 0.3s ease, background 0.3s ease;
   padding: 5px 0;
 }
 
 header.scrolled {
-  backdrop-filter: blur(12px);
-  background: rgba(0,0,0,0.2);
+  background: rgba(10, 10, 25, 0.95);
 }
 
 .header-container {

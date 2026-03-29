@@ -4,83 +4,421 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ===== ENHANCED STUDENT LOGIN STYLES ===== */
+  .student-login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #050510;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+
+  .student-login-page::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 25% 25%, rgba(124,58,237,0.3) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 75%, rgba(37,99,235,0.25) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 15%, rgba(236,72,153,0.2) 0%, transparent 45%);
+    animation: bgPulse 10s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes bgPulse {
+    0%   { opacity: 0.8; transform: scale(1); }
+    50%  { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.9; transform: scale(0.99); }
+  }
+
+  /* Grid overlay */
+  .sl-grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Stars */
+  .sl-stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .sl-star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.5); }
+  }
+
+
+
+  /* Orbs */
+  .sl-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+    animation: orbDrift linear infinite;
+  }
+  .sl-orb-1 { width: 450px; height: 450px; background: radial-gradient(#7c3aed, transparent); top: -120px; left: -80px; animation-duration: 22s; }
+  .sl-orb-2 { width: 380px; height: 380px; background: radial-gradient(#2563eb, transparent); bottom: -120px; right: -80px; animation-duration: 28s; animation-direction: reverse; }
+  .sl-orb-3 { width: 280px; height: 280px; background: radial-gradient(#ec4899, transparent); top: 40%; right: 20%; animation-duration: 19s; }
+
+  @keyframes orbDrift {
+    0%   { transform: translate(0,0) scale(1); }
+    25%  { transform: translate(25px,-20px) scale(1.05); }
+    50%  { transform: translate(-15px,25px) scale(0.95); }
+    75%  { transform: translate(20px,15px) scale(1.03); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+
+  /* Header */
+  .student-login-page header {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Main area */
+  .student-login-page main {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  /* Form wrapper */
+  .sl-form-outer {
+    width: 100%;
+    max-width: 460px;
+    animation: formRise 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @keyframes formRise {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Top badge */
+  .sl-form-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .sl-form-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 8px 24px rgba(124,58,237,0.5);
+    position: relative;
+  }
+  .sl-form-icon::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 21px;
+    background: conic-gradient(from 0deg, #7c3aed, #2563eb, #ec4899, #7c3aed);
+    z-index: -1;
+    opacity: 0.7;
+    animation: spinGlow 3s linear infinite;
+  }
+  @keyframes spinGlow { to { transform: rotate(360deg); } }
+
+  .login-form-container {
+    background: rgba(12, 12, 28, 0.92) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,58,237,0.15) !important;
+    border-radius: 28px !important;
+    padding: 40px 38px !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-form-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #7c3aed, #2563eb, #ec4899);
+    border-radius: 28px 28px 0 0;
+  }
+
+  .login-form-container::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: -60%;
+    width: 120%;
+    height: 300px;
+    background: radial-gradient(ellipse, rgba(124,58,237,0.04), transparent);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .login-title {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #fff 20%, #7c3aed 60%, #ec4899) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    text-align: center;
+    margin-bottom: 6px !important;
+  }
+
+  .sl-form-subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 28px;
+  }
+
+  .login-form-group label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: rgba(255,255,255,0.75) !important;
+    letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .login-form-group input {
+    font-family: 'Outfit', sans-serif;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: rgba(255,255,255,0.9) !important;
+    border-radius: 14px !important;
+    height: 54px !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .login-form-group input:focus {
+    border-color: rgba(124,58,237,0.6) !important;
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.15), 0 0 20px rgba(124,58,237,0.1) !important;
+    background: rgba(124,58,237,0.05) !important;
+  }
+
+  .login-btn {
+    background: linear-gradient(135deg, #7c3aed, #2563eb) !important;
+    border-radius: 14px !important;
+    height: 56px !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 24px rgba(124,58,237,0.4) !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .login-btn:hover::before { left: 100%; }
+  .login-btn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 14px 34px rgba(124,58,237,0.55) !important;
+    background: linear-gradient(135deg, #6d28d9, #1d4ed8) !important;
+  }
+
+  /* Flash messages */
+  .flash-messages { margin-bottom: 20px; }
+  .flash-message {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .flash-message.error { background: rgba(236,72,153,0.12); border: 1px solid rgba(236,72,153,0.3); color: #f472b6; }
+  .flash-message.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+  .flash-message.warning { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="login-page">
-    <header>
-        <div class="container header-container">
-            <div class="logo-container">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
-                <div class="logo-text">Hasteo</div>
-            </div>
-            
-            <div class="nav-center">
-                <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
-                <a href="{{ url_for('student_login') }}" class="active"><i class="fas fa-user-graduate"></i> Student</a>
-                <a href="{{ url_for('security_login') }}"><i class="fas fa-shield-alt"></i> Security</a>
-                <a href="{{ url_for('admin_login') }}"><i class="fas fa-lock"></i> Admin</a>
-            </div>
+<div class="student-login-page">
+  <!-- Background effects -->
+  <div class="sl-orb sl-orb-1"></div>
+  <div class="sl-orb sl-orb-2"></div>
+  <div class="sl-orb sl-orb-3"></div>
+  <div class="sl-grid-bg"></div>
+  <div class="sl-stars" id="slStars"></div>
+
+
+
+  <!-- Header -->
+  <header>
+    <div class="container header-container">
+      <div class="logo-container">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
+        <div class="logo-text">Hasteo</div>
+      </div>
+      <div class="nav-center">
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
+        <a href="{{ url_for('student_login') }}" class="active"><i class="fas fa-user-graduate"></i> Student</a>
+        <a href="{{ url_for('security_login') }}"><i class="fas fa-shield-alt"></i> Security</a>
+        <a href="{{ url_for('admin_login') }}"><i class="fas fa-lock"></i> Admin</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Login Area -->
+  <main>
+    <div class="sl-form-outer">
+      <!-- Icon badge above form -->
+      <div class="sl-form-badge">
+        <div class="sl-form-icon">
+          <i class="fas fa-user-graduate"></i>
         </div>
-    </header>
+      </div>
 
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">
+                <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-circle' }}"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-        <section class="login-hero">
-            <div class="login-form-container">
-                <h2 class="login-title">Student Login</h2>
-                
-                <form method="POST" action="{{ url_for('student_login') }}" class="login-form">
-                    <div class="login-form-group">
-                        <label for="student_id">Student ID *</label>
-                        <input type="text" id="student_id" name="student_id" required 
-                               placeholder="Enter your Student ID (e.g., SCS/12345/22)">
-                    </div>
-                    
-                    <div class="login-form-group">
-                        <label for="password">Password *</label>
-                        <div style="position: relative;">
-                            <input type="password" id="password" name="password" required 
-                                   placeholder="Enter your password">
-                            <button type="button" class="password-toggle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="remember" name="remember" style="width: auto;">
-                            <span style="font-size: 0.9rem; color: var(--text-secondary);">Remember me</span>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="login-btn">
-                        <i class="fas fa-sign-in-alt"></i> Login to Dashboard
-                    </button>
-                </form>
-                
-                <div class="login-links">
-                    <p>Don't have an account? Contact Admin</p>
-                    <p style="margin-top: 10px; font-size: 0.85rem;">
-                        <i class="fas fa-info-circle"></i> Use your college-provided credentials
-                    </p>
-                </div>
+      <div class="login-form-container">
+        <h2 class="login-title">Student Portal</h2>
+        <p class="sl-form-subtitle">Sign in to access your dashboard</p>
+
+        <form method="POST" action="{{ url_for('student_login') }}" class="login-form">
+          <div class="login-form-group">
+            <label for="student_id"><i class="fas fa-id-card" style="color:#7c3aed;"></i> Student ID</label>
+            <input type="text" id="student_id" name="student_id" required autofocus
+                   placeholder="e.g. SCS/12345/22" autocomplete="username">
+          </div>
+
+          <div class="login-form-group">
+            <label for="password"><i class="fas fa-lock" style="color:#7c3aed;"></i> Password</label>
+            <div style="position: relative;">
+              <input type="password" id="password" name="password" required
+                     placeholder="Enter your password" autocomplete="current-password">
+              <button type="button" class="password-toggle" id="togglePwd">
+                <i class="fas fa-eye" id="eyeIcon"></i>
+              </button>
             </div>
-        </section>
-    </main>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="remember" name="remember" style="width: auto; accent-color: #7c3aed;">
+              <span style="font-size: 0.88rem; color: rgba(255,255,255,0.5);">Remember me</span>
+            </label>
+          </div>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+          </button>
+        </form>
+
+        <div class="login-links">
+          <p>Don't have an account? <strong style="color:rgba(255,255,255,0.6);">Contact Admin</strong></p>
+          <p style="margin-top: 10px; font-size: 0.8rem;">
+            <i class="fas fa-info-circle" style="color:#7c3aed;"></i>
+            Use your college-provided credentials
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+<script>
+  // Generate stars
+  const slStars = document.getElementById('slStars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 'sl-star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = (Math.random() * 5) + 's';
+    s.style.animationDuration = (2 + Math.random() * 4) + 's';
+    const sz = Math.random() < 0.2 ? 3 : Math.random() < 0.5 ? 2 : 1;
+    s.style.width = sz + 'px';
+    s.style.height = sz + 'px';
+    slStars.appendChild(s);
+  }
+
+  // Password toggle
+  const togglePwd = document.getElementById('togglePwd');
+  const pwdInput = document.getElementById('password');
+  const eyeIcon = document.getElementById('eyeIcon');
+  if (togglePwd) {
+    togglePwd.addEventListener('click', () => {
+      const isHidden = pwdInput.type === 'password';
+      pwdInput.type = isHidden ? 'text' : 'password';
+      eyeIcon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+  }
+
+  // Login button loading state
+  const form = document.querySelector('.login-form');
+  const loginBtn = document.getElementById('loginBtn');
+  if (form) {
+    form.addEventListener('submit', function () {
+      if (loginBtn) {
+        setTimeout(() => {
+          loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+          loginBtn.disabled = true;
+        }, 10);
+      }
+    });
+  }
+
+  // Auto dismiss flashes
+  document.querySelectorAll('.flash-message').forEach(msg => {
+    setTimeout(() => {
+      msg.style.opacity = '0';
+      msg.style.transition = 'opacity 0.4s ease';
+      setTimeout(() => msg.remove(), 400);
+    }, 4000);
+  });
+</script>
 {% endblock %}

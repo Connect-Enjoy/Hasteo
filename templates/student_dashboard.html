@@ -1,145 +1,381 @@
 {% extends "base.html" %}
 
-{% block title %}Student Dashboard - Hasteo{% endblock %}
+{% block title %}My Dashboard - Hasteo{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<body class="student-body">
-    <header class="student-header">
-        <div class="container header-container">
-            <a href="{{ url_for('index') }}" class="logo-container">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo Logo" class="logo-img">
-                <div class="logo-text">Hasteo</div>
-            </a>
-            
-            <nav class="student-nav">
-                <a href="{{ url_for('student_dashboard') }}" class="active">
-                    <i class="fas fa-chart-pie"></i> Dashboard
-                </a>
-                <a href="{{ url_for('student_attendance') }}">
-                    <i class="fas fa-calendar-check"></i> My Attendance
-                </a>
-                <a href="{{ url_for('student_profile') }}">
-                    <i class="fas fa-user"></i> Profile
-                </a>
-            </nav>
-            
-            <div class="student-user">
-                <i class="fas fa-user-graduate"></i>
-                <span>{{ session.get('student_name', 'Student') }}</span>
-                <a href="{{ url_for('logout') }}" id="logoutBtn" class="logout-link" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
-            </div>
-        </div>
-    </header>
+<div class="student-dashboard">
+  <!-- Animated Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="stars-container" id="starsContainer"></div>
 
-    <main class="student-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
-                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
-                            {{ message }}
-                        </div>
-                    {% endfor %}
+  <div class="sd-wrapper">
+    <!-- ===== NAVBAR ===== -->
+    <nav class="sd-navbar">
+      <a href="{{ url_for('index') }}" class="sd-logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hasteo">
+        <span class="sd-logo-text">Hasteo</span>
+      </a>
+
+      <div class="sd-nav-right">
+        <div class="sd-time-badge" id="liveClock">
+          <i class="fas fa-clock"></i>
+          <span id="clockTime">--:-- --</span>
+        </div>
+        <div class="sd-live-badge">
+          <span class="sd-live-dot"></span>
+          Live
+        </div>
+        <a href="{{ url_for('student_logout') }}" class="sd-logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </nav>
+
+    <!-- ===== FLASH MESSAGES ===== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="sd-flash">
+          {% for category, message in messages %}
+            <div class="sd-flash-msg {{ category }}" onclick="this.parentElement.removeChild(this)">
+              <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-circle' }}"></i>
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="sd-main">
+
+      <!-- ===== HERO WELCOME ===== -->
+      <div class="sd-hero">
+        <div class="sd-hero-shine"></div>
+        <div>
+          <div class="sd-hero-greeting">
+            <i class="fas fa-star"></i>
+            Welcome back, Student
+          </div>
+          <h1>Hello, <span>{{ student.name.split()[0] }}</span>! 👋</h1>
+          <div class="sd-hero-sub">
+            <span>{{ student.student_id }}</span>
+            <span style="color: rgba(255,255,255,0.2);">•</span>
+            <span>{{ student.branch }}</span>
+            <span style="color: rgba(255,255,255,0.2);">•</span>
+            <span class="sd-hero-badge active">
+              <i class="fas fa-circle" style="font-size:6px;"></i>
+              Active
+            </span>
+          </div>
+        </div>
+        <div class="sd-avatar">{{ student.name[0].upper() }}</div>
+      </div>
+
+      <!-- ===== STAT CARDS ===== -->
+      <div class="sd-stats">
+        <div class="sd-stat-card purple">
+          <div class="sd-stat-icon"><i class="fas fa-calendar-check"></i></div>
+          <div class="sd-stat-label">Total Scans</div>
+          <div class="sd-stat-value" id="totalScansVal">{{ total_scans }}</div>
+          <div class="sd-stat-sub">All time records</div>
+        </div>
+        <div class="sd-stat-card blue">
+          <div class="sd-stat-icon"><i class="fas fa-bus"></i></div>
+          <div class="sd-stat-label">Bus Rides</div>
+          <div class="sd-stat-value">{{ total_scans }}</div>
+          <div class="sd-stat-sub">Total commutes</div>
+        </div>
+        <div class="sd-stat-card pink">
+          <div class="sd-stat-icon"><i class="fas fa-graduation-cap"></i></div>
+          <div class="sd-stat-label">Since Year</div>
+          <div class="sd-stat-value">{{ student.year_of_admission }}</div>
+          <div class="sd-stat-sub">Year of joining</div>
+        </div>
+        <div class="sd-stat-card green">
+          <div class="sd-stat-icon"><i class="fas fa-shield-check"></i></div>
+          <div class="sd-stat-label">Today Scans</div>
+          <div class="sd-stat-value" id="todayScansVal">{{ today_scans }}</div>
+          <div class="sd-stat-sub">Trips today</div>
+        </div>
+      </div>
+
+      <!-- ===== MAIN GRID ===== -->
+      <div class="sd-grid">
+
+        <!-- LEFT: Student Profile Details -->
+        <div>
+          <div class="sd-card" style="margin-bottom: 24px;">
+            <div class="sd-card-header">
+              <div class="sd-card-title">
+                <i class="fas fa-id-card icon-purple"></i>
+                Student Profile
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-purple"><i class="fas fa-user"></i></div>
+              <div>
+                <div class="sd-info-label">Full Name</div>
+                <div class="sd-info-value">{{ student.name }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-blue"><i class="fas fa-id-badge"></i></div>
+              <div>
+                <div class="sd-info-label">Student ID</div>
+                <div class="sd-info-value">{{ student.student_id }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-cyan"><i class="fas fa-hashtag"></i></div>
+              <div>
+                <div class="sd-info-label">Registration Number</div>
+                <div class="sd-info-value">{{ student.registration_number }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-pink"><i class="fas fa-code-branch"></i></div>
+              <div>
+                <div class="sd-info-label">Branch / Department</div>
+                <div class="sd-info-value">{{ student.branch }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-amber"><i class="fas fa-envelope"></i></div>
+              <div>
+                <div class="sd-info-label">Email Address</div>
+                <div class="sd-info-value">{{ student.email }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon icon-green"><i class="fas fa-calendar-alt"></i></div>
+              <div>
+                <div class="sd-info-label">Year of Admission</div>
+                <div class="sd-info-value">{{ student.year_of_admission }}</div>
+              </div>
+            </div>
+
+            <div class="sd-info-row">
+              <div class="sd-info-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i class="fas fa-home"></i></div>
+              <div>
+                <div class="sd-info-label">Residence Type</div>
+                <div class="sd-info-value">
+                  {% if student.residence == 'hosteller' %}
+                    🏠 Hosteller
+                  {% else %}
+                    🏡 Day Scholar
+                  {% endif %}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="sd-card">
+            <div class="sd-card-header">
+              <div class="sd-card-title">
+                <i class="fas fa-history icon-blue"></i>
+                Recent Bus Activity
+              </div>
+              <div class="sd-live-badge">
+                <span class="sd-live-dot"></span>
+                Live
+              </div>
+            </div>
+
+            <div id="recentActivity">
+              {% if recent_scans %}
+                <div class="sd-scan-list">
+                  {% for scan in recent_scans %}
+                  <div class="sd-scan-item">
+                    <div class="sd-scan-dot check-in"></div>
+                    <div class="sd-scan-info">
+                      <div class="scan-type">Bus Scan — {{ scan[5] if scan[5] else 'N/A' }}</div>
+                      <div class="scan-bus">{{ scan[3] }} · {{ scan[2] }}</div>
+                    </div>
+                    <div class="sd-scan-time">{{ scan[6].strftime('%I:%M %p') if scan[6] else '--' }}</div>
+                  </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="sd-empty-state">
+                  <i class="fas fa-bus-alt"></i>
+                  <p>No recent bus activity found</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Attendance + Bus Info -->
+        <div>
+          <!-- Attendance Card -->
+          <div class="sd-card" style="margin-bottom: 24px;">
+            <div class="sd-card-header">
+              <div class="sd-card-title">
+                <i class="fas fa-chart-bar icon-green"></i>
+                Attendance Overview
+              </div>
+            </div>
+
+            <!-- Summary Pills -->
+            <div class="sd-att-summary">
+              <div class="sd-att-pill present">
+                <div class="pill-num">{{ total_scans }}</div>
+                <div class="pill-label">Present</div>
+              </div>
+              <div class="sd-att-pill absent">
+                <div class="pill-num">0</div>
+                <div class="pill-label">Absent</div>
+              </div>
+              <div class="sd-att-pill total">
+                <div class="pill-num">{{ total_scans }}</div>
+                <div class="pill-label">Total</div>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="sd-progress-section">
+              <div class="sd-progress-label">
+                <span class="label-text">Overall Attendance Rate</span>
+                <span class="label-pct">100%</span>
+              </div>
+              <div class="sd-progress-bar">
+                <div class="sd-progress-fill" style="width: 100%" id="progressFill"></div>
+              </div>
+            </div>
+
+            <!-- View Full Attendance Button -->
+            <button class="sd-attendance-btn" onclick="openAttendanceModal()" id="viewAttBtn">
+              <div class="btn-icon"><i class="fas fa-calendar-check"></i></div>
+              <div class="btn-text">
+                <strong>View Full Attendance</strong>
+                <span>See monthly calendar & details</span>
+              </div>
+              <div class="btn-arrow"><i class="fas fa-chevron-right"></i></div>
+            </button>
+          </div>
+
+          <!-- Bus Info Card -->
+          <div class="sd-card" style="margin-bottom: 24px;">
+            <div class="sd-card-header">
+              <div class="sd-card-title">
+                <i class="fas fa-bus icon-blue"></i>
+                Bus Information
+              </div>
+            </div>
+
+            {% if student.residence == 'hosteller' %}
+            <!-- One Day Pass Card -->
+            <div style="text-align:center; padding: 24px; color: rgba(255,255,255,0.7);">
+              <i class="fas fa-ticket-alt" style="font-size: 2.2rem; margin-bottom: 12px; display: block; color: rgba(245,158,11,0.8);"></i>
+              {% if session.get('has_one_day_pass') %}
+                <p style="font-size:1.1rem; font-weight:700; color: #34d399; margin-bottom: 8px;">Active One-Day Pass</p>
+                <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 15px;">Valid today for Bus {{ session.get('pass_bus') }} to and fro.</p>
+                <div style="display:inline-block; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 8px; color: #34d399; font-weight: 600; font-size: 0.9rem;">
+                  <i class="fas fa-check-circle"></i> Pass Activated
+                </div>
+              {% else %}
+                <p style="font-size:1.1rem; font-weight:700; color: #f59e0b; margin-bottom: 8px;">Need to Travel?</p>
+                <p style="font-size:0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 15px;">Purchase a 1-day pass for ₹150 to travel on any college bus.</p>
+                <a href="{{ url_for('one_day_pass') }}" style="display:inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); padding: 10px 20px; border-radius: 12px; font-weight: 600; color: #fff; text-decoration: none; box-shadow: 0 4px 14px rgba(245,158,11,0.4); transition: transform 0.2s;">
+                  <i class="fas fa-shopping-cart"></i> Get One-Day Pass
+                </a>
+              {% endif %}
+            </div>
+            {% else %}
+            {% if last_bus %}
+            <div class="sd-bus-card">
+              <div class="sd-bus-icon"><i class="fas fa-bus-alt"></i></div>
+              <div class="sd-bus-info">
+                <div class="bus-label">Last Bus Used</div>
+                <div class="bus-value">{{ last_bus }}</div>
+                <div class="bus-sub">Day Scholar Route</div>
+              </div>
+              <div class="sd-bus-status active">Active</div>
+            </div>
+            {% else %}
+            <div style="text-align:center; padding: 30px; color: rgba(255,255,255,0.3);">
+              <i class="fas fa-bus" style="font-size: 2rem; margin-bottom: 12px; display: block; opacity:0.3;"></i>
+              <p style="font-size:0.85rem;">No bus records found</p>
+            </div>
             {% endif %}
-        {% endwith %}
+            {% endif %}
+          </div>
 
-        <div class="student-page-header">
-            <h1>Student Dashboard</h1>
-            <p>Track your attendance and bus schedule</p>
-        </div>
-
-        <div class="welcome-section">
-            <div class="welcome-content">
-                <h2>Welcome back, <span class="highlight">{{ session.get('student_name', 'Student') }}</span></h2>
-                <p>{{ now.strftime('%A, %B %d, %Y') }}</p>
+          <!-- Quick Info Card -->
+          <div class="sd-card" style="background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(37,99,235,0.08)); border-color: rgba(124,58,237,0.2);">
+            <div class="sd-card-header">
+              <div class="sd-card-title">
+                <i class="fas fa-info-circle icon-purple"></i>
+                Academic Info
+              </div>
             </div>
-            <div class="time-card">
-                <i class="fas fa-clock"></i>
-                <span id="liveTime">{{ now.strftime('%I:%M %p') }}</span>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="background: rgba(255,255,255,0.04); border-radius: 14px; padding: 16px; text-align: center;">
+                <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.4); margin-bottom: 6px; font-weight: 600;">Current Year</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #7c3aed;">
+                  {% set current_year = now.year %}
+                  {% set years_passed = current_year - student.year_of_admission %}
+                  {% if years_passed >= 4 %}4th{% elif years_passed == 3 %}3rd{% elif years_passed == 2 %}2nd{% elif years_passed == 1 %}1st{% else %}1st{% endif %}
+                </div>
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.4);">Year</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.04); border-radius: 14px; padding: 16px; text-align: center;">
+                <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.4); margin-bottom: 6px; font-weight: 600;">Batch</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #2563eb;">{{ student.year_of_admission }}</div>
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.4);">Admission</div>
+              </div>
             </div>
+          </div>
         </div>
-
-        <div class="student-info-card">
-            <div class="student-avatar">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <div class="student-details">
-                <div class="detail-row"><span class="detail-label">Student ID:</span><span class="detail-value">{{ student.student_id }}</span></div>
-                <div class="detail-row"><span class="detail-label">Registration No:</span><span class="detail-value">{{ student.registration_number }}</span></div>
-                <div class="detail-row"><span class="detail-label">Branch:</span><span class="branch-badge branch-{{ student.branch|lower }}">{{ student.branch }}</span></div>
-                <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">{{ student.year_of_admission }}</span></div>
-                <div class="detail-row"><span class="detail-label">Residence:</span><span class="residence-badge {{ student.residence }}">{{ 'Day Scholar' if student.residence == 'day_scholar' else 'Hosteller' }}</span></div>
-                <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">{{ student.email }}</span></div>
-            </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card"><i class="fas fa-calendar-check"></i><div class="stat-value">{{ total_attendance }}</div><div class="stat-label">Total Attendance</div></div>
-            <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-value">{{ attendance_rate }}%</div><div class="stat-label">Attendance Rate</div></div>
-            <div class="stat-card"><i class="fas fa-calendar-day"></i><div class="stat-value">{{ monthly_attendance }}</div><div class="stat-label">This Month</div></div>
-        </div>
-
-        <div class="quick-actions">
-            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-            <div class="action-buttons">
-                <a href="{{ url_for('student_attendance') }}" class="action-btn"><i class="fas fa-calendar-check"></i><span>View Attendance</span></a>
-                <a href="{{ url_for('student_profile') }}" class="action-btn"><i class="fas fa-user-edit"></i><span>Update Profile</span></a>
-                <a href="{{ url_for('scanner') }}" class="action-btn"><i class="fas fa-qrcode"></i><span>Scan ID Card</span></a>
-            </div>
-        </div>
-
-        <div class="recent-attendance">
-            <div class="section-header"><h3><i class="fas fa-history"></i> Recent Attendance</h3><a href="{{ url_for('student_attendance') }}" class="view-all">View All <i class="fas fa-arrow-right"></i></a></div>
-            <div class="table-responsive">
-                <table class="attendance-table">
-                    <thead>
-                        <tr><th>Date</th><th>Time</th><th>Bus</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        {% if recent_attendance %}
-                            {% for record in recent_attendance %}
-                            <tr>
-                                <td><strong>{{ record[0].strftime('%d %b, %Y') }}</strong></td>
-                                <td>{{ record[1].strftime('%I:%M %p') }}</td>
-                                <td>{{ record[2] }}</td>
-                                <td><span class="status-badge status-success"><i class="fas fa-check-circle"></i> Present</span></td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr class="empty-row"><td colspan="4"><div class="empty-state"><i class="fas fa-calendar-check"></i><p>No attendance records found</p></div></td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="info-card tips-card"><i class="fas fa-lightbulb"></i><h4>Quick Tips</h4><ul><li><i class="fas fa-check-circle"></i> Always carry your student ID card for scanning</li><li><i class="fas fa-check-circle"></i> Check your attendance regularly to ensure accuracy</li><li><i class="fas fa-check-circle"></i> Contact security if your ID is not scanning properly</li></ul></div>
-
-        <div class="footer-note"><i class="fas fa-graduation-cap"></i> Student portal - Track your attendance</div>
+      </div>
     </main>
-</body>
+  </div>
+
+  <!-- ===== ATTENDANCE MODAL ===== -->
+  <div class="sd-modal-overlay" id="attendanceModal">
+    <div class="sd-modal">
+      <div class="sd-modal-header">
+        <div class="sd-modal-title">
+          <i class="fas fa-calendar-alt"></i>
+          Attendance Details
+        </div>
+        <button class="sd-modal-close" onclick="closeAttendanceModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sd-modal-body" id="attendanceModalBody">
+        <div class="sd-loading">
+          <div class="sd-spinner"></div>
+          <p>Loading attendance data...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/student.js') }}"></script>
 <script>
-    function updateLiveTime() {
-        const timeElement = document.querySelector('#liveTime');
-        if (timeElement) {
-            const now = new Date();
-            timeElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-    }
-    setInterval(updateLiveTime, 60000);
-    updateLiveTime();
+// Pass student data from Flask to JS
+const STUDENT_ID = "{{ student.student_id }}";
+const STUDENT_NAME = "{{ student.name }}";
+const TOTAL_SCANS = {{ total_scans }};
+const TODAY_SCANS = {{ today_scans }};
 </script>
 {% endblock %}

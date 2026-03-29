@@ -26,6 +26,9 @@
                 <a href="{{ url_for('admin_buses') }}">
                     <i class="fas fa-bus"></i> Manage Buses
                 </a>
+                <a href="{{ url_for('admin_anomalies') }}">
+                    <i class="fas fa-exclamation-triangle"></i> Anomalies
+                </a>
             </nav>
             
             <div class="admin-user">
@@ -137,11 +140,8 @@
                                     <input type="text" name="student_id" required placeholder="SCS/12345/23">
                                 </div>
                                 <div class="form-group">
-                                    <label>Registration Number *</label>
-                                    <input type="text" name="registration_number" required placeholder="2023CS101">
-                                    <small style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 5px; display: block;">
-                                        <i class="fas fa-info-circle"></i> This will be used as the student's password
-                                    </small>
+                                    <label>Reg Number *</label>
+                                    <input type="text" name="registration_number" required placeholder="Registration number">
                                 </div>
                             </div>
 
@@ -149,6 +149,10 @@
                                 <div class="form-group">
                                     <label>Email *</label>
                                     <input type="email" name="email" required placeholder="student@college.edu">
+                                </div>
+                                <div class="form-group">
+                                    <label>Password *</label>
+                                    <input type="password" name="password" required placeholder="Enter password">
                                 </div>
                             </div>
 
@@ -404,9 +408,6 @@
                     <div class="form-group">
                         <label>Registration Number *</label>
                         <input type="text" id="editStudentReg" name="registration_number" required>
-                        <small style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 5px; display: block;">
-                            <i class="fas fa-info-circle"></i> This is also the student's password
-                        </small>
                     </div>
                 </div>
                 
@@ -420,28 +421,6 @@
                     <button type="submit" class="btn-add">Update Student</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteConfirmModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle" style="color: #f44336;"></i> Confirm Delete</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            
-            <div class="delete-confirm-content">
-                <p id="deleteConfirmMessage">Are you sure you want to delete this item?</p>
-                <p class="delete-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</p>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn-add modal-cancel">Cancel</button>
-                    <button type="button" id="confirmDeleteBtn" class="btn-add" style="background: #f44336;">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </body>
